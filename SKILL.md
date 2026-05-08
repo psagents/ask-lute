@@ -1,9 +1,6 @@
 ---
 name: ask-lute
-description: "Assistant for lute-related questions. Use this skill whenever
-  the user asks anything about lute — configuration, usage, troubleshooting,
-  API, or documentation. Always go directly to the mapped file/URL for the
-  topic rather than browsing from scratch."
+description: "Assistant for lute-related questions (LCLS Unified Task Executor) — task creation, YAML configuration, workflows, executors, IPC."
 ---
 
 # Ask Lute
@@ -33,9 +30,9 @@ extract only the relevant section rather than summarizing the whole file.
 
 | Topic | Read this file first |
 |---|---|
-| Creating a new task, implementation checklist, gotchas | `/sdf/home/r/rouffetc/.claude/skills/ask-lute/task-creation.md` |
-| Workflows, DAGs, Airflow, Maestro, tasklets | `/sdf/home/r/rouffetc/.claude/skills/ask-lute/workflow-creation.md` |
-| YAML config, parameter models, variable substitution | `/sdf/home/r/rouffetc/.claude/skills/ask-lute/lute-configuration.md` |
-| Anything else (executors, IPC, DB, installation, running) | `/sdf/home/r/rouffetc/.claude/skills/ask-lute/reference.md` |
+| Creating a new task, implementation checklist, gotchas | `~/.claude/skills/ask-lute/references/task-creation.md` |
+| Workflows, DAGs, Airflow, Maestro, tasklets | `~/.claude/skills/ask-lute/references/workflow-creation.md` |
+| YAML config, parameter models, variable substitution | `~/.claude/skills/ask-lute/references/lute-configuration.md` |
+| Anything else (executors, IPC, DB, installation, running) | `~/.claude/skills/ask-lute/references/reference.md` |
 
 When in doubt, read `reference.md` — it contains the full Topic to File Map and Website URL Map.
