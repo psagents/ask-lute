@@ -171,8 +171,13 @@ SubmitSMD:
   #         poni1: ""        # First poni in meters.
   #         poni2: ""        # Second poni in meters.
   #       npts: 512          # Number of Q bins. Default: 512
-  #       npts_az: 13        # Number of phi bins. Default: 13
+  #       npts_az: 13        # Number of phi (azimuthal) bins. Default: 13
+  #                          # Use npts_az: 1 for isotropic SAXS (gives scalar I(Q) per shot).
+  #                          # Use npts_az > 1 for anisotropic scattering or azimuthal sectors.
   #       int_units: "2th_deg"  # Integration units. Default: "2th_deg"
+  #                             # SAXS / WAXS: change to "q_A^-1" (Q in Å⁻¹) or "q_nm^-1".
+  #                             # Powder diffraction: keep "2th_deg".
+  #                             # The downstream SmallDataXSSAnalyzer expects Q-space units.
   #       return2d: false    # Return the full 2D q/phi map. Default: false
 
   #   # Photon counting parameters, keyed by detector name. Optional.

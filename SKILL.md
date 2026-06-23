@@ -41,6 +41,7 @@ For large GitHub files (`executor.py`, `ipc.py`, large model files), ask WebFetc
 | Topic | Reference |
 |---|---|
 | **Setting up LUTE for an experiment** (install, workspace, workflow/DAG, YAML assembly, eLog registration) | [references/lute-setup.md](references/lute-setup.md) |
+| **LCLS instruments, techniques, workflows, detectors** (hutch → technique → workflow mapping; SFX backend choice; LCLS-I vs LCLS-II) | [references/lcls-techniques.md](references/lcls-techniques.md) |
 | Creating a new task, implementation checklist, gotchas | [references/task-creation.md](references/task-creation.md) |
 | Workflows, DAGs, Airflow, Maestro, tasklets | [references/workflow-creation.md](references/workflow-creation.md) |
 | YAML config, parameter models, variable substitution | [references/lute-configuration.md](references/lute-configuration.md) |
