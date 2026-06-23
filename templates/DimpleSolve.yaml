@@ -1,0 +1,117 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: DimpleSolver (Executor)
+# Runs CCP4's dimple for crystallographic structure solution by molecular replacement.
+# Uses the CCP4-8.0 environment sourced at LCLS.
+# For full documentation: https://ccp4.github.io/dimple/
+DimpleSolve:
+
+  # Path to the input PDB file for molecular replacement. Required.
+  pdb: ""
+
+  # Path to the input MTZ file with merged structure factors.
+  # Auto-populated from the ManipulateHKL output if left empty.
+  # in_file:
+
+  # Output directory for dimple results.
+  # Auto-populated from the ManipulateHKL output directory if left empty.
+  # out_dir:
+
+  # R-factor threshold that triggers molecular replacement (dimple runs rigid-body first). Default: 0.4
+  # mr_thresh:
+
+  # Perform more refinement cycles (slower but more thorough). Default: false
+  # slow:
+
+  # Output MTZ filename. Default: "final.mtz"
+  # hklout:
+
+  # Output PDB filename. Default: "final.pdb"
+  # xyzout:
+
+  # Column name for intensities (I) in the input MTZ. Optional.
+  # icolumn:
+
+  # Column name for sigma(I) in the input MTZ. Optional.
+  # sigicolumn:
+
+  # Column name for amplitudes (F) in the input MTZ. Optional.
+  # fcolumn:
+
+  # Column name for sigma(F) in the input MTZ. Optional.
+  # sigfcolumn:
+
+  # Path to a ligand CIF description file for Refmac (LIBIN). Optional.
+  # libin:
+
+  # Extra Refmac keyword(s) to pass during the refinement step. Optional.
+  # refmac_key:
+
+  # Path to an MTZ file providing pre-calculated free-R flags. Optional.
+  # free_r_flags:
+
+  # Free-R column with optional offset value. Optional.
+  # freecolumn:
+
+  # Image format for output diagnostic figures: "png", "jpeg", or "none". Optional.
+  # img_format:
+
+  # Use a white background in Coot and output images. Default: false
+  # white_bg:
+
+  # Retain intermediate files (do not clean up after the run). Default: false
+  # no_cleanup:
+
+  # Skip the unmodelled blob search. Default: false
+  # no_blob_search:
+
+  # Use SHELX/AnoDe to find peaks in the anomalous difference map. Default: false
+  # anode:
+
+  # Strip heteroatoms from the input model before molecular replacement. Default: false
+  # no_hetatm:
+
+  # Number of rigid-body refinement cycles to perform. Optional.
+  # rigid_cycles:
+
+  # Number of jelly-body refinement cycles to perform. Optional.
+  # jelly:
+
+  # Number of final restrained refinement cycles to perform. Optional.
+  # restr_cycles:
+
+  # Final resolution limit applied to the data in Angstroms. Optional.
+  # lim_resolution:
+
+  # Refmac matrix weight (e.g. "auto-weight"). Optional.
+  # weight:
+
+  # Molecular replacement program: "phaser" or "molrep". Optional.
+  # mr_prog:
+
+  # Number of molecules for molecular replacement ("auto" or an integer). Optional.
+  # mr_num:
+
+  # High resolution limit for MR. Values >10 are interpreted as eLLG. Optional.
+  # mr_reso:
+
+  # Program to convert intensities to amplitudes: "truncate" or "ctruncate". Optional.
+  # itof_prog:
+
+  # CCP4 dimple binary path. Managed by LUTE internally.
+  # executable:

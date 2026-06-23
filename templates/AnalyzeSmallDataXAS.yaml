@@ -1,0 +1,67 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: SmallDataXASAnalyzer (MPIExecutor)
+# Processes XAS (X-ray Absorption Spectroscopy) data from a SmallData HDF5 file.
+# Calculates difference absorption signal and bins it by scan variables.
+AnalyzeSmallDataXAS:
+
+  # Path to the SmallData HDF5 file to analyze.
+  # Auto-populated from the SubmitSMD result if left empty.
+  smd_path: ""
+
+  # Name of the detector with absorption data (e.g. "epix_2"). Required.
+  xas_detname: ""
+
+  # IPM variable name for X-ray intensity filtering (e.g. "ipm5/sum"). Required.
+  ipm_var: ""
+
+  # EPICS PV name for CCM (Crystal Monochromator) position readback (e.g. "epics/ccm_E"). Required.
+  ccm: ""
+
+  # Name of the detector with scattering data, used for normalization. Optional.
+  # Optional — omit when no simultaneous X-ray scattering detector is available.
+  # When provided, the XAS signal is normalized shot-by-shot by the scattering intensity,
+  # reducing sensitivity to X-ray beam fluctuations.
+  # xss_detname:
+
+  # Scan variable(s) to bin the signal by. Can be a string or a list
+  # (e.g. "lxt", or ["lxt", "lxe_opa"]). Optional.
+  # Optional — when omitted the difference signal is averaged over all laser-on shots.
+  # Provide when the experiment scans a delay stage or other motor so the signal can be
+  # resolved as a function of that variable.
+  # scan_var:
+
+  # EPICS PV name for the CCM energy setpoint (e.g. "epicsUser/ccm_E_setpoint"). Optional.
+  # Optional — used to cross-check or correct the CCM readback (ccm) against the commanded
+  # energy setpoint. Omit when the setpoint PV is not recorded in the SmallData file.
+  # ccm_set:
+
+  # Element under investigation. Currently unused; reserved for future EXAFS support. Optional.
+  # Optional — has no effect in the current implementation. Will be used in a future release
+  # to drive element-specific EXAFS processing (edge energies, Fourier transforms, etc.).
+  # element:
+
+  # Intensity thresholds for filtering low-quality shots.
+  # Uncomment the sub-fields to override the defaults; all sub-fields are optional.
+  intensity_thresholds:
+    # Minimum integrated scattering intensity — shots below this are rejected. Default: 10.0
+    # Optional — set lower if scattering signal is weak, or higher to reject more bad shots.
+    # min_Iscat:
+    # Minimum X-ray intensity measured by the IPM — shots below this are rejected. Default: 1000.0
+    # Optional — adjust to match the typical IPM signal range for this experiment.
+    # min_ipm:

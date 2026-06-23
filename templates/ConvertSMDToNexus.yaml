@@ -1,0 +1,34 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: SMDToNexusConvertor (Executor)
+# Converts a smalldata_tools HDF5 file to a CCTBX-compatible NeXuS HDF5 file.
+ConvertSMDToNexus:
+
+  # Path to the detector geometry file in DIALS/CCTBX format (.expt). Required.
+  geom: ""
+
+  # Path to the input SmallData HDF5 file.
+  # Auto-populated to the standard SmallData path for this experiment/run if left empty.
+  # input:
+
+  # Path to the output NeXuS HDF5 file.
+  # Auto-populated to the standard CCTBX output path for this experiment/run if left empty.
+  # output:
+
+  # Flip the detector data axes before writing. Default: false
+  # flip:

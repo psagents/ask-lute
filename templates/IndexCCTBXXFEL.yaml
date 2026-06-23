@@ -1,0 +1,126 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: CCTBXIndexer (Executor)
+# Runs cctbx.xfel (DIALS stills_process) for crystallographic indexing of LCLS data.
+# Uses the CCP4 CCTBX environment sourced at LCLS.
+IndexCCTBXXFEL:
+
+  # LCLS data specification for psana access.
+  # Provide data_spec OR an explicit in_file pointing to an existing data location file.
+  # Comment out data_spec entirely if supplying in_file directly.
+  data_spec:
+    # LCLS experiment name. Uses header value by default.
+    experiment: "{{ experiment }}"
+    # DAQ run number. Uses header value by default.
+    run: "{{ run }}"
+    # Psana detector address (e.g. "Rayonix", "epix10k2M"). Required.
+    detector_address: ""
+    # Wavelength correction offset in eV. Optional.
+    # wavelength_offset:
+    # Energy calibration: eV per pixel for the spectrum detector. Optional.
+    # spectrum_eV_per_pixel:
+    # Energy calibration: eV offset for the spectrum detector. Optional.
+    # spectrum_eV_offset:
+
+  # Path to the input data location file (written from data_spec if provided).
+  # Auto-populated to work_dir/data_<exp>_<run>.loc if left empty.
+  # in_file:
+
+  # Path to the CCTBX phil configuration file.
+  # Auto-populated to work_dir/cctbx_index.phil if left empty.
+  # phil_file:
+
+  # Template parameters written into the CCTBX phil file before indexing.
+  # Comment out this entire phil_parameters block to skip re-writing the phil file
+  # and use phil_file directly.
+  phil_parameters:
+
+    # --- Output ---
+    # Directory where output files will be placed. Auto-populated from LUTE_WORK_DIR if empty.
+    # output_output_dir:
+    # Save one combined experiment/reflection file per process. Default: true
+    # output_composite_output:
+    # Directory for log files. Defaults to output_output_dir.
+    # output_logging_dir:
+
+    # --- Dispatch ---
+    # Attempt to index images. Default: true
+    # dispatch_index:
+    # Refine experimental models after indexing. Default: false
+    # dispatch_refine:
+    # Integrate indexed images. Default: true
+    # dispatch_integrate:
+
+    # --- Parallelization ---
+    # Multiprocessing method: "mpi", "multiprocessing", "sge", "lsf", "pbs". Default: "mpi"
+    # mp_method:
+
+    # --- Spot finding ---
+    # Path to a bad pixel mask file. Optional.
+    # spotfinder_lookup_mask:
+    # Flat gain multiplier applied to the detector. Optional.
+    # spotfinder_threshold_dispersion_gain:
+    # Sigma threshold for classifying a pixel as background in the local area. Default: 6
+    # spotfinder_threshold_dispersion_sigma_bkgnd:
+    # Sigma threshold for classifying a pixel as a strong spot. Default: 3
+    # spotfinder_threshold_dispersion_sigma_strong:
+    # Global intensity threshold — pixels below this are always classified as background. Default: 0
+    # spotfinder_threshold_dispersion_global_threshold:
+    # Size of the local kernel [nx, ny] for sigma estimation. Default: [6, 6]
+    # spotfinder_threshold_dispersion_kernel_size:
+    # Minimum contiguous pixels required for a spot to pass the filter. Default: 3
+    # spotfinder_filter_min_spot_size:
+    # High-resolution cutoff in Angstroms for spot filtering. Optional.
+    # spotfinder_filter_d_min:
+
+    # --- Indexing ---
+    # Refine indexing candidates in the target symmetry (not P1). Default: false
+    # indexing_stills_refine_candidates_with_known_symmetry:
+    # Refine all indexing candidates instead of only the best by RMSD. Default: true
+    # indexing_stills_refine_all_candidates:
+    # Target space group for indexing (e.g. "P 41 21 2"). Optional.
+    # indexing_known_symmetry_space_group:
+    # Target unit cell for indexing (e.g. "140 140 140 90 90 90"). Optional.
+    # indexing_known_symmetry_unit_cell:
+    # Reference geometry .expt file to use in place of image headers. Optional.
+    # input_reference_geometry:
+    # Panel origin override [x, y, z] in mm. Requires fast_axis and slow_axis. Optional.
+    # geometry_detector_panel_origin:
+
+    # --- Integration ---
+    # Sigma threshold for outlier rejection in background plane fitting. Default: 10
+    # integration_background_simple_outlier_plane_n_sigma:
+    # Detector gain multiplier for variances after integration of still images. Default: 1.0
+    # integration_summation_detector_gain:
+
+    # --- Profile fitting ---
+    # Centroid definition for beam divergence: "com" (centre of mass) or "s1". Default: "com"
+    # profile_gaussian_rs_centroid_definition:
+
+    # --- Refinement ---
+    # Outlier rejection algorithm for refinement. Optional.
+    # refinement_reflections_outlier_algorithm:
+
+  # Internal template rendering config. Do not set unless overriding.
+  # lute_template_cfg:
+
+  # MPI executable path. Managed by LUTE internally.
+  # executable:
+
+  # CCTBX dials.stills_process binary path. Managed by LUTE internally.
+  # cctbx_executable:

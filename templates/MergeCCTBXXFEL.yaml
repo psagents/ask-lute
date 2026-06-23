@@ -1,0 +1,119 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: CCTBXMerger (Executor)
+# Runs cctbx.xfel.merge to merge indexed reflections using the CCTBX framework.
+# Uses the CCP4 CCTBX environment sourced at LCLS.
+MergeCCTBXXFEL:
+
+  # Path to the CCTBX phil configuration file.
+  # Auto-populated to work_dir/cctbx_merge.phil if left empty.
+  # phil_file:
+
+  # Template parameters written into the CCTBX phil file before merging.
+  # Comment out this entire phil_parameters block to skip re-writing the phil file
+  # and use phil_file directly.
+  phil_parameters:
+
+    # --- Input ---
+    # Path(s) to the directory containing integrated experiment/reflection files. Required.
+    input_path: ""
+    # Suffix for experiment files. Default: "_integrated.expt"
+    # input_experiments_suffix:
+    # Suffix for reflection files. Default: "_integrated.refl"
+    # input_reflections_suffix:
+    # Parallel file loading method: "uniform" or "node_memory". Default: "uniform"
+    # input_parallel_file_load_method:
+
+    # --- Filtering ---
+    # Filtering algorithm: "n_obs", "reindex", "resolution", "unit_cell", "report". Default: "unit_cell"
+    # filter_algorithm:
+    # Unit cell filtering method: "range", "value", or "cluster". Default: "cluster"
+    # filter_unit_cell_algorithm:
+    # Path to covariance file for cluster-based unit cell filtering. Optional.
+    # filter_unit_cell_cluster_covariance_file:
+    # Component index into the covariance file. Default: 0
+    # filter_unit_cell_cluster_covariance_component:
+    # Mahalanobis distance threshold for cluster filtering. Default: 5.0
+    # filter_unit_cell_cluster_covariance_mahalanobis:
+    # Minimum pairwise correlation for outlier rejection. Default: -1.0
+    # filter_outlier_min_corr:
+
+    # --- Selection ---
+    # Selection algorithm. Default: "significance_filter"
+    # select_algorithm:
+    # Sigma threshold for the significance filter. Default: 0.1
+    # select_significance_filter_sigma:
+
+    # --- Scaling ---
+    # Path to a scaling model file. Optional.
+    # scaling_model:
+    # Resolution scalar for scaling. Default: 0.993420862158964
+    # scaling_resolution_scalar:
+
+    # --- Post-refinement ---
+    # Enable post-refinement. Default: true
+    # postrefinement_enable:
+    # Post-refinement algorithm. Default: "rs"
+    # postrefinement_algorithm:
+
+    # --- Merging ---
+    # Minimum resolution (d_min) in Angstroms for merging. Required.
+    merging_d_min: ""
+    # Merge Friedel pairs separately (anomalous merging). Default: false
+    # merging_merge_anomalous:
+    # Set the average unit cell for all crystals. Default: true
+    # merging_set_average_unit_cell:
+    # Error model: "ha14", "ev11", "mm24", or "errors_from_sample_residuals". Default: "ev11"
+    # merging_error_model:
+
+    # --- Statistics ---
+    # Number of resolution bins for the statistics tables. Default: 20
+    # statistics_n_bins:
+    # Report maximum likelihood statistics. Default: true
+    # statistics_report_ML:
+    # Path to a reference MTZ file for CC_iso calculation. Optional.
+    # statistics_cciso_mtz_file:
+    # Column name for F in the reference MTZ file. Default: "F"
+    # statistics_cciso_mtz_column_F:
+
+    # --- Output ---
+    # Prefix for all output files. Optional.
+    # output_prefix:
+    # Directory where output files are written. Optional.
+    # output_output_dir:
+    # Temporary directory for intermediate files. Optional.
+    # output_tmp_dir:
+    # Write timing information to the log. Default: true
+    # output_do_timing:
+    # Log verbosity level (0 = minimal). Default: 0
+    # output_log_level:
+    # Save experiment and reflection files alongside the merged result. Default: true
+    # output_save_experiments_and_reflections:
+
+    # --- Parallel ---
+    # All-to-all parallelization parameter. Default: 1
+    # parallel_a2a:
+
+  # Internal template rendering config. Do not set unless overriding.
+  # lute_template_cfg:
+
+  # MPI executable path. Managed by LUTE internally.
+  # executable:
+
+  # CCTBX cctbx.xfel.merge binary path. Managed by LUTE internally.
+  # cctbx_executable:

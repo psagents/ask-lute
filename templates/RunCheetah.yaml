@@ -1,0 +1,198 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: CheetahRunner (Executor)
+# Runs OM Cheetah for online/offline crystallographic hit-finding and peak detection.
+# Uses the OpenMPI and OM environment sourced at LCLS.
+RunCheetah:
+
+  # psana data source string (e.g. "exp=mfx100903824:run=27"). Required.
+  source: ""
+
+  # Path to the OM Cheetah YAML configuration file. Required.
+  om_config: ""
+
+  # Number of MPI processes to launch. Auto-detected from SLURM_NPROCS if not set.
+  # n_processes:
+
+  # MPI rank-to-resource binding. Set to "none" when using data compression. Default: "core"
+  # bind_to:
+
+  # OM Cheetah binary path. Managed by LUTE internally.
+  # om_executable:
+
+  # MPI executable path. Managed by LUTE internally.
+  # executable:
+
+  # Internal template rendering config for the OM config YAML. Do not set unless overriding.
+  # lute_template_cfg:
+
+  # OM Cheetah sub-configuration written into the om_config YAML file.
+  # When provided, LUTE renders the OM config YAML from this block using a template.
+  # Comment out cheetah_subconfig entirely to skip re-writing and use om_config directly.
+  cheetah_subconfig:
+
+    # --- OM global settings ---
+    om:
+      # Parallelization backend. Options: "MpiParallelization", "MultiprocessingParallelization". Default: "MpiParallelization"
+      # parallelization_layer:
+      # Data retrieval backend. Options: "PsanaDataEventHandler", "Psana2DataEventHandler". Default: "PsanaDataEventHandler"
+      # data_retrieval_layer:
+      # Processing layer type (keep as default for Cheetah). Default: "CheetahProcessing"
+      # processing_layer:
+
+    # --- Data retrieval layer ---
+    data_retrieval_layer:
+      # Override for the psana calibration directory. Optional.
+      # psana_calibration_directory:
+      # Node pool size for worker pool. Default: 0
+      # node_pool_size:
+
+      # Data source configuration — describes how each data type is retrieved from psana.
+      data_sources:
+
+        # Timestamp retrieval.
+        timestamp:
+          # Source type. Default: "TimestampPsana"
+          # type:
+          # psana object name for timestamp. Default: "EventID"
+          # psana_name:
+
+        # Event ID retrieval.
+        event_id:
+          # Source type. Default: "EventIdPsana"
+          # type:
+
+        # Detector image retrieval.
+        detector_data:
+          # Source type for detector images. Default: "AreaDetectorPsana"
+          # type:
+          # psana detector name (e.g. "epix10k2M", "Rayonix"). Required.
+          psana_name: ""
+          # Use calibrated detector data. Default: true
+          # calibration:
+          # psana2 algorithm for data access: "raw" or "fex". Default: "raw"
+          # psana_algorithm:
+
+        # Detector distance retrieval.
+        detector_distance:
+          # Source type (e.g. "EpicsVariablePsana"). Default: "EpicsVariablePsana"
+          # type:
+          # psana PV name for detector distance (e.g. "detector_z"). Required if using psana source.
+          psana_name: ""
+          # Value type or direct numeric value for detector distance. Required.
+          value: ""
+
+        # Beam energy retrieval.
+        beam_energy:
+          # Source type. Default: "BeamEnergyPsana"
+          # type:
+          # Direct numeric beam energy value (eV), if using "FloatValueFromConfiguration". Optional.
+          # value:
+
+    # --- Cheetah output settings ---
+    cheetah:
+      # Output directory for processed CXI files. Required.
+      processed_directory: ""
+      # Filename prefix for output CXI files (e.g. "mfx100903824-27"). Required.
+      processed_filename_prefix: ""
+      # Output file extension. Default: "cxi"
+      # processed_filename_extension:
+      # Write class sum images during processing. Default: true
+      # write_class_sums:
+      # Interval in events for updating class sum images. Default: 5
+      # class_sums_update_interval:
+      # Interval in events for sending class sums (-1 to disable). Default: -1
+      # class_sums_sending_interval:
+      # Filename prefix for class sum files. Default: "sums"
+      # class_sums_filename_prefix:
+      # Interval in events for writing status file updates. Default: 100
+      # status_file_update_interval:
+      # Data type used for the HDF5 output. Default: "float32"
+      # hdf5_file_data_type:
+      # HDF5 compression method: "gzip", "bitshuffle_with_zstd", or null (disabled). Optional.
+      # hdf5_file_compression:
+      # GZip compression level (1–9), used when hdf5_file_compression is "gzip". Default: 4
+      # hdf5_file_gzip_compression_level:
+      # ZStd compression level, used when hdf5_file_compression is "bitshuffle_with_zstd". Default: 3
+      # hdf5_file_zstd_compression_level:
+      # Enable bitshuffle before compression. Default: false
+      # hdf5_file_compression_shuffle:
+      # Maximum number of peaks written per frame in the HDF5 file. Default: 2048
+      # hdf5_file_max_num_peaks:
+      # Size of external data request lists. Default: 20
+      # external_data_request_list_size:
+      # Response URL. Optional.
+      # responding_url:
+      # HDF5 path structure for output data fields. Rarely needs changing.
+      # hdf5_fields:
+      #   detector_data: "/entry_1/data_1/data"
+      #   event_id: "/LCLS/fiducial"
+      #   beam_energy: "/LCLS/photon_energy_eV"
+      #   detector_distance: "/LCLS/detector_1/EncoderValue"
+      #   timestamp: "/LCLS/timestamp"
+      #   peak_list: "/entry_1/result_1"
+
+    # --- Crystallography settings ---
+    crystallography:
+      # Path to the CrystFEL geometry file for peak finding. Required.
+      geometry_file: ""
+      # Minimum peak count to classify a frame as a crystallographic hit. Default: 10
+      # min_num_peaks_for_hit:
+      # Maximum peak count to classify a frame as a hit. Default: 5000
+      # max_num_peaks_for_hit:
+      # Whether the input geometry is already optimized. Default: false
+      # geometry_is_optimized:
+      # Window size in events for the running average hit rate. Default: 200
+      # running_average_window_size:
+      # Reporting interval in events. Default: 100
+      # speed_report_interval:
+      # Broadcast interval in events (0 to disable). Default: 0
+      # data_broadcast_interval:
+
+    # --- Peakfinder8 settings ---
+    peakfinder8_peak_detection:
+      # ADC threshold for peak detection. Required.
+      adc_threshold: ""
+      # Minimum signal-to-noise ratio for a pixel to be part of a peak. Required.
+      minimum_snr: ""
+      # Maximum number of peaks to extract per image. Default: 2048
+      # max_num_peaks:
+      # Minimum pixel count per peak. Default: 1
+      # min_pixel_count:
+      # Maximum pixel count per peak. Default: 30
+      # max_pixel_count:
+      # Radius (pixels) for computing the local background. Default: 4
+      # local_bg_radius:
+      # Minimum radius from detector center (pixels) for the peak search. Default: 80
+      # min_res:
+      # Maximum radius from detector center (pixels) for the peak search. Default: 800
+      # max_res:
+      # Use fast calculation mode (less accurate). Default: false
+      # fast_mode:
+      # Number of pixels per bin in radial statistics computation. Default: 100
+      # num_pixel_per_bin_in_radial_statistics:
+      # Path to an HDF5 file containing a bad pixel mask. Optional.
+      # bad_pixel_map_filename:
+      # Path within the HDF5 bad pixel mask file to the mask data. Default: "/data/data"
+      # bad_pixel_map_hdf5_path:
+
+    # --- Data compression (optional) ---
+    # compression:
+    #   run_compression: false    # Enable data compression. Default: false
+    #   backend: null             # Compression backend: "roibinsz" (libpressio). Optional.
+    #   compression_parameters: null  # Backend-specific parameters (SZCompressorParameters for roibinsz).
