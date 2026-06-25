@@ -28,7 +28,7 @@ The flow for a single task run: `YAML → config.py → TaskParameters → Manag
 
 **If the user wants to set up LUTE for an experiment** (e.g. "set up LUTE for my
 experiment", "configure LUTE for X", "I need to run LUTE on Y"):
-- Read `references/lute-setup.md` immediately. The hutch-specific reference
+- Read `commands/lute-setup.md` immediately. The hutch-specific reference
   (`references/hutches/{hutch}.md`) is read at Phase 3.1 once the hutch is known.
 - Enter the setup wizard at Phase 1 and **drive the conversation forward through all
   phases without waiting for the user to prompt each step.** Ask questions, collect
@@ -58,11 +58,19 @@ For large GitHub files (`executor.py`, `ipc.py`, large model files), ask WebFetc
 
 ---
 
+## Command Dispatch
+
+| Command / Intent | Action |
+|---|---|
+| `/lute-setup` or "set up LUTE", "configure LUTE for X", "I need to run LUTE on Y" | Read `commands/lute-setup.md` |
+
+---
+
 ## Reference Navigation
 
 | Topic | Reference |
 |---|---|
-| **Setting up LUTE for an experiment** (install, workspace, workflow/DAG, YAML assembly, eLog registration) | [references/lute-setup.md](references/lute-setup.md) |
+| **Setting up LUTE for an experiment** (install, workspace, workflow/DAG, YAML assembly, eLog registration) | [commands/lute-setup.md](commands/lute-setup.md) |
 | **LCLS hutch reference** (experimental capacity, DAQ generation, detector inventory, LUTE-relevant PVs, analysis chains) — read at Phase 3.1 once hutch is known | `references/hutches/{hutch}.md` where `{hutch}` = first 3 chars of experiment name (e.g. `references/hutches/mfx.md` for `mfxl1013621`) |
 | Creating a new task, implementation checklist, gotchas | [references/task-creation.md](references/task-creation.md) |
 | Workflows, DAGs, Airflow, Maestro, tasklets | [references/workflow-creation.md](references/workflow-creation.md) |
