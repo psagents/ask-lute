@@ -85,20 +85,26 @@ test_config       = {lute_path}/install/lib/python{X.Y}/site-packages/config/tes
 **Still planning — no execution.** This phase produces two artefacts for the user to
 approve before Phase 4: (1) the confirmed analysis chain, (2) the complete DAG YAML.
 
-### Step 3.1 — Pre-inference: use hutch context
+### Step 3.1 — Pre-inference: read the hutch reference
 
-Read [lcls-techniques.md](lcls-techniques.md) and use the hutch from Phase 1 to form
-a prior hypothesis before asking the user anything:
+Read `references/hutches/{hutch}.md` (where `{hutch}` = first 3 characters of the
+experiment name from Phase 1, e.g. `references/hutches/mfx.md` for `mfxl1013621`).
 
-- Look up the hutch in the Hutch × Technique Reference table
-- Determine DAQ generation (LCLS-I/psana1 or LCLS-II/psana2)
-- Identify the 1–3 most likely technique types for that hutch
-- Frame the next question as a **confirmation**, not open-ended
+Use it to:
+- Determine DAQ generation (LCLS-I/psana1 or LCLS-II/psana2) and the correct SmallData task
+- Identify the 1–3 most likely experiment types for that hutch
+- Understand which detectors, beam monitors, and PVs are available — for use as
+  **suggestions** when walking the user through Phase 4 YAML filling, not as pre-fills
 
-Example for hutch `mfx`:
-> "MFX typically runs SFX, XES, or XAS experiments. Which best describes yours?
-> (a) Serial femtosecond crystallography (SFX), (b) X-ray emission spectroscopy (XES),
-> (c) X-ray absorption spectroscopy (XAS), or (d) something else?"
+**The hutch file is a reference for consultation, not a source of default values.**
+Walk every YAML parameter explicitly with the user (Phase 4). Use the hutch file to
+make informed suggestions and to recognise when a user-provided alias or PV looks
+plausible vs. unusual.
+
+Frame the technique question as a **confirmation**, not open-ended. Example for `mfx`:
+> "MFX typically runs SFX, liquid SAXS/WAXS, or XES. Which best describes yours?
+> (a) Serial femtosecond crystallography (SFX), (b) TR-SAXS/WAXS + pump-probe,
+> (c) X-ray emission spectroscopy (XES), or (d) something else?"
 
 ### Step 3.2 — Experiment description
 
@@ -365,8 +371,28 @@ Ask: "Where should SmallData HDF5 files be written? Default:
 
 ### Step 4.3 — SubmitSMD: producer_parameters
 
-Work through each category in order. For each: ask the enabling question; if the
-answer is yes, ask every parameter in that block; then checkpoint.
+Before walking the categories, **pre-filter using hutch context and the confirmed
+technique from Phase 3.** Skip a category silently (do not ask the enabling question)
+if it is clearly irrelevant for the hutch + technique combination.
+
+| Category | Skip silently when |
+|---|---|
+| A — Scattering (SAXS/WAXS/XSS) | Technique is XES, RIXS, XAS, SFX, or photoemission — no area detector scattering |
+| B — Beam monitors | Hutch has no FIM/Wave8 wiring (rare; ask if uncertain) |
+| C — Integrating detectors | No Archon/Andor/CCD mentioned in the experiment description |
+| D — Area detector image saves | Not doing XES/RIXS/spectroscopy |
+| E — Sparse photon counting | High-flux scattering experiment; not doing sparse XES or spectroscopy |
+| F — XPCS/autocorrelation | Not XCS hutch and user did not mention speckle or XPCS |
+| G — SVD multi-bunch | User did not mention multi-bunch or multi-pulse shots |
+| H — cRIXS/Pressio compression | Not TMO/RIX or user did not mention Rowland circle spectrometer |
+| I — Timing tool | User explicitly said no pump laser |
+| J — Detector accumulation | **Never skip** — always ask |
+
+When in doubt about a category, ask the enabling question rather than skipping.
+Only skip when the experiment context makes the category unambiguously inapplicable.
+
+Work through each **relevant** category in order. For each: ask the enabling question;
+if the answer is yes, ask every parameter in that block; then checkpoint.
 
 #### A — X-ray scattering (SAXS / WAXS / XSS)
 
@@ -684,8 +710,8 @@ No name-based lookup is performed — the skill determines the right trigger liv
 
 | Workflow role | `--trigger` spec to pass |
 |---|---|
-| Produces data from raw XTC (SmallData, SFX peak finding, XTC conversion) | `END_OF_RUN` |
-| Analyzes SmallData output (XSS, XAS, XES) — depends on SmallData completing | `RUN_PARAM_IS_VALUE:SmallData:done` |
+| Produces data from raw XTC online (data is collected) (SmallData live mode on) | `START_OF_RUN` | 
+| Produces data from raw XTC offline (SmallData, SFX peak finding, XTC conversion) | `END_OF_RUN` |
 | Geometry calibration, phasing, or one-time computation | `MANUAL` |
 
 ---

@@ -26,6 +26,28 @@ The flow for a single task run: `YAML → config.py → TaskParameters → Manag
 
 ## Instructions
 
+**If the user wants to set up LUTE for an experiment** (e.g. "set up LUTE for my
+experiment", "configure LUTE for X", "I need to run LUTE on Y"):
+- Read `references/lute-setup.md` immediately. The hutch-specific reference
+  (`references/hutches/{hutch}.md`) is read at Phase 3.1 once the hutch is known.
+- Enter the setup wizard at Phase 1 and **drive the conversation forward through all
+  phases without waiting for the user to prompt each step.** Ask questions, collect
+  answers, and advance to the next phase autonomously. Do not stop and wait after each
+  phase unless you need explicit user approval (Phase 3.6, Phase 4.5).
+
+**Communication style during setup — silent reasoning, visible outputs only:**
+- Do **not** narrate your reasoning. Do not say "I'm reading lcls-techniques.md",
+  "Based on the hutch I can see that...", or "Let me think about the DAG structure."
+- Work through Phases 1–3 internally. The **only** things you show the user are:
+  - A direct question when you need information you cannot derive
+  - A checkpoint block after filling a YAML section (Phase 4)
+  - The full plan summary at Phase 3.6 (approval gate)
+  - The full YAML at Phase 4.5 (approval gate)
+  - The exact commands to run at Phase 5
+- Ask **one question at a time**. Do not bundle multiple questions or explain why
+  you are asking — just ask cleanly and wait for the answer before continuing.
+
+**For all other LUTE questions** (concepts, task creation, YAML config, debugging):
 1. **Identify the topic** from the user's question.
 2. **Read the matching subfile** from the Reference Navigation table using the Read tool — do this before answering.
 3. **Fetch the GitHub file or website URL** listed inside that subfile.
@@ -41,7 +63,7 @@ For large GitHub files (`executor.py`, `ipc.py`, large model files), ask WebFetc
 | Topic | Reference |
 |---|---|
 | **Setting up LUTE for an experiment** (install, workspace, workflow/DAG, YAML assembly, eLog registration) | [references/lute-setup.md](references/lute-setup.md) |
-| **LCLS instruments, techniques, workflows, detectors** (hutch → technique → workflow mapping; SFX backend choice; LCLS-I vs LCLS-II) | [references/lcls-techniques.md](references/lcls-techniques.md) |
+| **LCLS hutch reference** (experimental capacity, DAQ generation, detector inventory, LUTE-relevant PVs, analysis chains) — read at Phase 3.1 once hutch is known | `references/hutches/{hutch}.md` where `{hutch}` = first 3 chars of experiment name (e.g. `references/hutches/mfx.md` for `mfxl1013621`) |
 | Creating a new task, implementation checklist, gotchas | [references/task-creation.md](references/task-creation.md) |
 | Workflows, DAGs, Airflow, Maestro, tasklets | [references/workflow-creation.md](references/workflow-creation.md) |
 | YAML config, parameter models, variable substitution | [references/lute-configuration.md](references/lute-configuration.md) |
