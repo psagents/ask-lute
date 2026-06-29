@@ -35,6 +35,11 @@ experiment", "configure LUTE for X", "I need to run LUTE on Y"):
   answers, and advance to the next phase autonomously. Do not stop and wait after each
   phase unless you need explicit user approval (Phase 3.6, Phase 4.5).
 
+**If the user wants to refine parameters after first output** (e.g. "check my SmallData
+output", "my ROI is wrong", "field not found in HDF5", "adjust thresholds", "re-run"):
+- Read `commands/lute-refine.md` immediately and drive the inspect → adjust → re-trigger
+  loop forward.
+
 **Communication style during setup — silent reasoning, visible outputs only:**
 - Do **not** narrate your reasoning. Do not say "I'm reading lcls-techniques.md",
   "Based on the hutch I can see that...", or "Let me think about the DAG structure."
@@ -63,6 +68,7 @@ For large GitHub files (`executor.py`, `ipc.py`, large model files), ask WebFetc
 | Command / Intent | Action |
 |---|---|
 | `/lute-setup` or "set up LUTE", "configure LUTE for X", "I need to run LUTE on Y" | Read `commands/lute-setup.md` |
+| `/lute-refine` or "check my SmallData output", "adjust parameters", "my ROI is wrong", "field not found", "refine the config", "re-run after first output" | Read `commands/lute-refine.md` |
 
 ---
 
@@ -71,6 +77,7 @@ For large GitHub files (`executor.py`, `ipc.py`, large model files), ask WebFetc
 | Topic | Reference |
 |---|---|
 | **Setting up LUTE for an experiment** (install, workspace, workflow/DAG, YAML assembly, eLog registration) | [commands/lute-setup.md](commands/lute-setup.md) |
+| **Refining LUTE config after first output** (inspect HDF5, fix field names, adjust ROI/thresholds, re-trigger) | [commands/lute-refine.md](commands/lute-refine.md) |
 | **LCLS hutch reference** (experimental capacity, DAQ generation, detector inventory, LUTE-relevant PVs, analysis chains) — read at Phase 3.1 once hutch is known | `references/hutches/{hutch}.md` where `{hutch}` = first 3 chars of experiment name (e.g. `references/hutches/mfx.md` for `mfxl1013621`) |
 | Creating a new task, implementation checklist, gotchas | [references/task-creation.md](references/task-creation.md) |
 | Workflows, DAGs, Airflow, Maestro, tasklets | [references/workflow-creation.md](references/workflow-creation.md) |

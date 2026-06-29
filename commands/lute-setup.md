@@ -29,6 +29,24 @@ lute_output_dir = {results_dir}/lute_output
 config_path     = {lute_output_dir}/{hutch}_lute.yaml
 ```
 
+### Kerberos ticket — check now
+
+Run immediately after paths are derived. `install_lute.py` requires a valid ticket to
+register workflows in the eLog. Checking early lets the user obtain one in the background
+while Phases 2–4 proceed.
+
+```bash
+klist -c FILE:$HOME/krb5cc.ticket
+```
+
+**Valid:** proceed silently.
+**Missing or expired:** show the user this command to run in their own terminal
+(the AI never asks for the password) and ask them to confirm once done:
+```
+kinit -c FILE:$HOME/krb5cc.ticket <username>@SLAC.STANFORD.EDU
+```
+Re-run `klist` to verify before continuing.
+
 ---
 
 ## Phase 2 — LUTE Install Type Decision
@@ -85,7 +103,7 @@ test_config       = {lute_path}/install/lib/python{X.Y}/site-packages/config/tes
 **Still planning — no execution.** This phase produces two artefacts for the user to
 approve before Phase 4: (1) the confirmed analysis chain, (2) the complete DAG YAML.
 
-### Step 3.1 — Pre-inference: read the hutch reference
+### Step 3.1 — Pre-inference: read the hutch reference, then ask one question
 
 Read `references/hutches/{hutch}.md` (where `{hutch}` = first 3 characters of the
 experiment name from Phase 1, e.g. `references/hutches/mfx.md` for `mfxl1013621`).
@@ -101,16 +119,14 @@ Walk every YAML parameter explicitly with the user (Phase 4). Use the hutch file
 make informed suggestions and to recognise when a user-provided alias or PV looks
 plausible vs. unusual.
 
-Frame the technique question as a **confirmation**, not open-ended. Example for `mfx`:
-> "MFX typically runs SFX, liquid SAXS/WAXS, or XES. Which best describes yours?
-> (a) Serial femtosecond crystallography (SFX), (b) TR-SAXS/WAXS + pump-probe,
-> (c) X-ray emission spectroscopy (XES), or (d) something else?"
+Ask a single framed question that collects technique, pump laser, and scientific output
+in one go. Frame technique as a confirmation based on hutch context. Example for `mfx`:
+> "MFX typically runs SFX, TR-SAXS/WAXS, or XES. Which best describes yours?
+> (a) SFX, (b) TR-SAXS/WAXS + pump-probe, (c) XES/RIXS, (d) something else?
+> Also: is there a pump laser, and what output do you need?"
 
-### Step 3.2 — Experiment description
-
-Prompt (frame as confirmation if hutch context already narrows the options):
-> "Briefly describe your experiment: technique, detector(s), pump laser (yes/no),
-> and what scientific output you need."
+Record technique, pump-laser flag, and scientific output from this single answer. Do not
+ask a separate Step 3.2 question — all three are answered here.
 
 ### Step 3.3 — Tier 1: Match against the LUTE task catalog
 
@@ -216,8 +232,24 @@ next:
   next: []
 ```
 
-For SmallData chains, include `!branch_daq2` — the runtime picks `SmallDataProducer`
-or `SmallDataProducer2` transparently based on the DAQ `is_daq2` flag:
+**DAQ generation and `!branch_daq2`:**
+
+If DAQ generation was **confirmed** in Phase 1 (user said `.xtc` or `.xtc2` explicitly),
+write a flat DAG using the single correct producer — no branch needed:
+```yaml
+# LCLS-II confirmed — flat DAG, no branch
+!LUTE_DAG
+task_name: "SmallDataProducer2"
+slurm_params: "--nodes=4 --ntasks=50 --exclusive"
+next:
+- task_name: "SmallDataXSSAnalyzer"
+  slurm_params: "--nodes=1 --ntasks=1"
+  next: []
+```
+
+Only use `!branch_daq2` when DAQ generation is **unknown at setup time** — e.g. a
+shared config that must run on both LCLS-I and LCLS-II data. The branch doubles DAG
+length and causes standard YAML linter errors (expected, but noisy):
 ```yaml
 !LUTE_DAG
 !branch_daq2
@@ -329,7 +361,7 @@ confirmed. If uncertain, write `"# VERIFY ALIAS"` as a placeholder.
 
 Ask each field explicitly:
 
-1. **title** — "Brief description of this experiment config (for your own reference)?"
+1. **title** — "Optional: Brief description of this experiment config (for your own reference)?"
 2. **experiment** — already known from Phase 1; confirm with user
 3. **run** — leave empty (`""`); filled automatically by the eLog trigger at runtime
 4. **date** — today's date; confirm with user (`YYYY/MM/DD`)
@@ -426,13 +458,38 @@ If **yes**, ask: "Do you have a `.poni` PyFAI calibration file for the detector 
 **Enabling question:** "Do you have beam intensity monitors to record for shot-by-shot
 normalization? (e.g. FIM, Wave8, photodiodes)"
 
-If **yes**, for each monitor detector (use confirmed aliases from Step 4.0):
+If **yes**, identify the detector type from the alias confirmed in Step 4.0:
+
+**`bmmon`-type detectors** (LCLS-II beam monitors: `MfxDg2BmMon`, `HxxDg1BmMon`, etc.)
+
+These expose firmware-computed scalars — no ROI extraction is needed or possible.
+They are auto-saved by smalldata_tools and do **not** belong in `detnames`.
+Available fields (written automatically to HDF5):
+- `<alias>/totalIntensityJoules` — primary I₀; use as `ipm_var` in downstream tasks
+- `<alias>/xPositionMeters`, `<alias>/yPositionMeters` — beam position
+- `<alias>/peakAmplitude` — per-channel array (16 channels for Wave8)
+
+Action: record the alias and note `<alias>/totalIntensityJoules` as the `ipm_var`.
+No `getROIs` block needed. No `detnames` entry needed.
+
+> **Checkpoint — beam monitors:** confirm alias and `ipm_var` field path. Correct?
+
+**Waveform digitizer detectors** (LCLS-I Wave8, photodiode digitizers outputting raw
+waveforms — dettype is `wave8` or `usbencoder`, not `bmmon`)
+
+For each waveform monitor (use confirmed aliases from Step 4.0):
   1. "Signal ROI: row range [start, end] and col range [start, end]?" → `sig_roi`
   2. "Background ROI (or none if not needed)?" → `bkg_roi`
   3. "Is the signal inverted (negative-going pulse)? [no]" → `negative_signal`
   4. "Should a waveform fit be applied? [no]" → `calcPars`
 
 > **Checkpoint — beam monitors block.** Show assembled `getROIs` section. Correct?
+
+**How to check detector type** if unsure:
+```python
+det = run.Detector('<alias>')
+print(det._dettype)   # 'bmmon' → use scalar path; anything else → ask waveform questions
+```
 
 #### C — Integrating detectors (Archon CCD, Andor Newton, etc.)
 
@@ -540,7 +597,7 @@ For each downstream task in the analysis chain (e.g. `AnalyzeSmallDataXSS`,
 corresponding template, asking the user for each value explicitly.
 
 Common fields across downstream tasks:
-- `smd_path` — leave empty (`""`); auto-populated from `SubmitSMD` result via LUTE DB
+- `smd_path` — set silently to `""`; auto-populated from `SubmitSMD` result via LUTE DB. Do not ask the user.
 - `ipm_var` — "Which IPM alias for X-ray intensity filtering? (e.g. `ipm5/sum`)"
 - `scan_var` — "Is there a scan variable (delay stage, monochromator energy, motor)?
   If yes, what is its DAQ alias? If no, leave empty."
@@ -573,22 +630,6 @@ Do not advance to Phase 5 until the user gives explicit approval.
 
 The user has approved the plan (Phase 3) and the YAML (Phase 4). Now execute everything
 in order. Each step is concrete and verifiable.
-
-### Step 5.0 — Kerberos ticket (get it now to avoid interruption later)
-
-`install_lute.py` checks `$HOME/krb5cc.ticket` before posting to the eLog.
-Obtain a ticket before writing any files so the final script call is uninterrupted:
-
-```bash
-klist -c FILE:$HOME/krb5cc.ticket
-```
-
-**Valid:** proceed. **Missing or expired** — ask the user for their SLAC username and
-show the command to run **in their own terminal** (the AI never asks for the password):
-```
-kinit -c FILE:$HOME/krb5cc.ticket <username>@SLAC.STANFORD.EDU
-```
-Ask the user to confirm once done, then re-run `klist` to verify.
 
 ### Step 5.1 — Fresh install build (Option B only)
 
