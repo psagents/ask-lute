@@ -11,7 +11,7 @@ date: ""
 # LUTE version — do not change unless forcing an older version
 lute_version: 0.2.0
 # Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
-task_timeout: 600
+task_timeout: 3600
 # Main working directory — must exist and be writable; database and outputs land here
 work_dir: ""
 ---
@@ -57,6 +57,9 @@ IndexCCTBXXFEL:
     # output_composite_output:
     # Directory for log files. Defaults to output_output_dir.
     # output_logging_dir:
+    # Logging verbosity: "suppressed" (silences per-image output, recommended for MPI),
+    # "normal" (one log file per MPI rank), or "disabled" (no logging). Default: "suppressed"
+    # output_logging_option:
 
     # --- Dispatch ---
     # Attempt to index images. Default: true
