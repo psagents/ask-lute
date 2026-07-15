@@ -219,3 +219,29 @@ main Task without spawning a new process. To add one:
 
 1. Define the callable in `lute/tasks/tasklets.py`.
 2. Attach it in `lute/managed_tasks.py` via `ManagedTask(..., tasklets=[...])`.
+
+---
+
+## Managed Task Environment Sourcing
+
+All managed tasks in `lute/managed_tasks.py` now have **explicit `shell_source()` calls**
+that source the correct psana environment before the task subprocess runs. This is required
+when using the virtual-env installation (`setup_lute -fi`), where psana is not in the LUTE
+venv and must be injected from the LCLS conda stacks.
+
+**Per-task sourcing rules (as of PR #132):**
+
+| Managed Task(s) | Sourced environment | Notes |
+|---|---|---|
+| `SmallDataProducer` | `conda1/manage/bin/psconda.sh` | LCLS-I (psana1, Python 3.9) |
+| `AgBhGeometryOptimizer` | `conda1/manage/bin/psconda.sh` | LCLS-I (psana1, Python 3.9) |
+| `BayFAIOptimizer` | `conda1/manage/bin/psconda.sh` | LCLS-I (psana1, Python 3.9) |
+| `PeakFinderPsocake` | `conda1/manage/bin/psconda.sh` | LCLS-I (deprecated, psana1) |
+| All other managed tasks | `conda2/manage/bin/psconda.sh` | LCLS-II (psana2, Python 3.9) |
+
+**Why this matters for workflow creation:**
+- Always fetch the current `managed_tasks.py` to verify which environment a task sources.
+- When adding a new managed task, add an explicit `shell_source()` call pointing to the
+  appropriate conda environment.
+- The executor uses `LUTE_NEW_PYVER` set in the venv activate script to switch Python
+  interpreter versions for tasks that need Python 3.11 (e.g. `PeakFinderSFXXpp`).

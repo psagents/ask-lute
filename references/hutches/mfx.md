@@ -75,6 +75,35 @@ All aliases below must be confirmed with the user via `event_keys` (psana1) or
 | `lens_v` | Vertical lens position | Spatial overlap scan |
 | `lens_h` | Horizontal lens position | Spatial overlap scan |
 
+### Von Hamos Spectrometer (`epicsArchFilePV` — XES experiments)
+
+| EPICS PV | Alias | Description |
+|---|---|---|
+| `MFX:SPEC:C1:TILT.RBV` | `vh_cr1_pitch` | Crystal 1 tilt |
+| `MFX:SPEC:C1:X.RBV` | `vh_cr1_trans` | Crystal 1 translation |
+| `MFX:SPEC:C1:ROT.RBV` | `vh_cr1_yaw` | Crystal 1 yaw |
+| `MFX:SPEC:C2:TILT.RBV` | `vh_cr2_pitch` | Crystal 2 tilt |
+| `MFX:SPEC:C2:X.RBV` | `vh_cr2_trans` | Crystal 2 translation |
+| `MFX:SPEC:C2:ROT.RBV` | `vh_cr2_yaw` | Crystal 2 yaw |
+| `MFX:SPEC:C3:TILT.RBV` | `vh_cr3_pitch` | Crystal 3 tilt |
+| `MFX:SPEC:C3:X.RBV` | `vh_cr3_trans` | Crystal 3 translation |
+| `MFX:SPEC:C3:ROT.RBV` | `vh_cr3_yaw` | Crystal 3 yaw |
+| `MFX:SPEC:C4:TILT.RBV` | `vh_cr4_pitch` | Crystal 4 tilt |
+| `MFX:SPEC:C4:X.RBV` | `vh_cr4_trans` | Crystal 4 translation |
+| `MFX:SPEC:C4:ROT.RBV` | `vh_cr4_yaw` | Crystal 4 yaw |
+| `MFX:SPEC:C5:TILT.RBV` | `vh_cr5_pitch` | Crystal 5 tilt |
+| `MFX:SPEC:C5:X.RBV` | `vh_cr5_trans` | Crystal 5 translation |
+| `MFX:SPEC:C5:ROT.RBV` | `vh_cr5_yaw` | Crystal 5 yaw |
+| `MFX:SPEC:C6:TILT.RBV` | `vh_cr6_pitch` | Crystal 6 tilt |
+| `MFX:SPEC:C6:X.RBV` | `vh_cr6_trans` | Crystal 6 translation |
+| `MFX:SPEC:C6:ROT.RBV` | `vh_cr6_yaw` | Crystal 6 yaw |
+| `MFX:SPEC:ROT.RBV` | `vh_rot` | Spectrometer overall rotation |
+| `MFX:SPEC:T1.RBV` | `vh_y` | Spectrometer Y translation |
+| `MFX:SPEC:T2.RBV` | `vh_x1` | Spectrometer X1 translation |
+| `MFX:SPEC:T3.RBV` | `vh_x2` | Spectrometer X2 translation |
+
+Save via `epicsArchFilePV` (archiver, shot-to-shot). Confirmed from `mfx101592326`.
+
 ### Monochromator / CCM (`ccm`, `ccm_set` — XAS/XES experiments only)
 
 | smalldata field | Description | Notes |

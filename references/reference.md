@@ -66,8 +66,13 @@
 
 ### Build & Extensions
 - **Build script**: `build.sh`
+- **`setup_lute` experiment setup utility** (creates venvs, copies config, registers eLog workflows): `utilities/setup/setup_lute.py`
+- **Installation activation script** (sets PATH/PYTHONPATH for meson/prefix installs): `utilities/activate_installation`
 - **Extensions**: `extensions/` directory
 - **Subprojects**: `subprojects/` directory
+
+> **Package name:** The pip-installable package is `lute-lcls` (not `lute`).
+> Install with: `pip install lute-lcls`
 
 ---
 
@@ -103,6 +108,7 @@ Base: `https://slac-lcls.github.io/lute/v0.2.0`
 | Question | GitHub file | Website URL |
 |---|---|---|
 | How do I install lute? | `README.md` | `/quick_start/` |
+| How do I set up lute for an experiment? | `utilities/setup/setup_lute.py` | `/usage/installation/` |
 | How do I write a new Task? | `lute/tasks/task.py` | `/development/new_task/first_party/` |
 | How does IPC work? | `lute/execution/ipc.py` | `/source/execution/ipc/` |
 | How do I configure parameters? | `lute/io/config.py`, `lute/io/models/base.py` | `/usage/configuration/` |
@@ -111,3 +117,19 @@ Base: `https://slac-lcls.github.io/lute/v0.2.0`
 | How do I add a tasklet? | `lute/tasks/tasklets.py`, `lute/managed_tasks.py` | `/development/new_task/third_party/` |
 | How does Airflow integration work? | `lute/execution/launch.py` | `/development/creating_workflows_airflow/` |
 | How does the Executor spawn Tasks? | `lute/execution/executor.py` | `/source/execution/executor/` |
+
+---
+
+## Entry Points (installed by `pyproject.toml`)
+
+| Command | Module | Description |
+|---|---|---|
+| `run_task` | `run_task:main` | Execute a single task subprocess |
+| `subprocess_task` | `subprocess_task:main` | Task subprocess entry point |
+| `launch_slurm` | `launch_scripts.launch_maestro:main` | Launch a full workflow DAG via Maestro |
+| `launch_airflow` | `launch_scripts.launch_airflow:main` | Launch a full workflow DAG via Airflow |
+| `submit_slurm` | `launch_scripts.submit_slurm:main` | Submit a single managed task to SLURM |
+| `setup_lute` | `lute_utilities.setup.setup_lute:main` | Set up LUTE for an experiment (venvs, config, eLog) |
+| `lute_cfg` | `lute_utilities.lute_cfg.lute_cfg:main` | LUTE configuration utility |
+| `lute_help` | `lute_utilities.help.task_parameters:main` | Show task parameter help |
+| `dbview` | `lute_utilities.dbview.dbview:main` | View the LUTE SQLite database |
