@@ -15,43 +15,41 @@ task_timeout: 600
 # Main working directory — must exist and be writable; database and outputs land here
 work_dir: ""
 ---
-# ManagedTask: CCTBXMerger (Executor)
-# Runs cctbx.xfel.merge to merge indexed/scaled reflections using the CCTBX framework.
+# ManagedTask: CCTBXScaler (Executor)
+# Runs cctbx.xfel.merge with a scaling-only step list to produce scaled .expt/.refl files
+# without performing the final statistical merge. The output directory is stored in the LUTE
+# database so that a downstream CCTBXMerger task can auto-resolve input_path from it.
 # Uses the CCP4 CCTBX environment sourced at LCLS.
 #
-# Two common workflows:
-#   1. Full pipeline (scale + merge in one step): leave dispatch_step_list commented out.
-#      Set input_path to the directory of *_integrated.expt / *_integrated.refl files.
-#   2. Merge-only (after a separate CCTBXScaler run): set dispatch_step_list to the
-#      merge-only step list shown in the dispatch section below.
-#      input_path will be auto-resolved from the ScaleCCTBXXFEL DB entry if left empty.
-MergeCCTBXXFEL:
+# Typical use: run CCTBXScaler first, inspect unit cell statistics, then run CCTBXMerger
+# in merge-only mode (set dispatch_step_list in MergeCCTBXXFEL accordingly).
+ScaleCCTBXXFEL:
 
   # Path to the CCTBX phil configuration file.
-  # Auto-populated to work_dir/cctbx_merge.phil if left empty.
+  # Auto-populated to work_dir/cctbx_scale.phil if left empty.
   # phil_file:
 
-  # Template parameters written into the CCTBX phil file before merging.
+  # Output directory for scaled files. Populated automatically from
+  # phil_parameters.output_output_dir and stored in the LUTE database so that a
+  # downstream CCTBXMerger task can auto-resolve input_path.
+  # result_output_dir:
+
+  # Template parameters written into the CCTBX phil file before scaling.
   # Comment out this entire phil_parameters block to skip re-writing the phil file
   # and use phil_file directly.
   phil_parameters:
 
     # --- Dispatch ---
-    # Step list for the merge-only workflow (after a separate ScaleCCTBXXFEL run).
-    # This is the correct default when CCTBXMerger follows CCTBXScaler — running the
-    # full pipeline here would re-scale already-scaled data.
-    # To run scale+merge in a single job (no prior ScaleCCTBXXFEL), replace with:
-    #   input balance model_scaling modify filter scale postrefine statistics_unitcell
-    #   statistics_beam model_statistics statistics_resolution group errors_merge
-    #   statistics_intensity merge statistics_intensity_cxi
-    dispatch_step_list: >-
-      input model_scaling statistics_unitcell statistics_beam model_statistics
-      statistics_resolution group errors_merge statistics_intensity merge
-      statistics_intensity_cxi
+    # Pipeline steps for the scaling-only workflow (space-separated).
+    # Default runs: input balance model_scaling modify filter scale postrefine
+    # statistics_unitcell statistics_beam model_statistics statistics_resolution
+    # Override to add or remove steps (e.g. drop "balance" for small jobs).
+    # dispatch_step_list:
 
     # --- Input ---
-    # Path(s) to the directory containing integrated/scaled experiment+reflection files.
-    # Auto-resolved from the ScaleCCTBXXFEL DB entry if left empty (merge-only workflow).
+    # Path(s) to the directory containing integrated experiment+reflection files
+    # (*_integrated.expt / *_integrated.refl). Accepts a single path or a list
+    # of paths for multi-run scaling. Required.
     input_path: ""
     # Suffix for experiment files. Default: "_integrated.expt"
     # input_experiments_suffix:
@@ -123,75 +121,39 @@ MergeCCTBXXFEL:
     # Default: 0.993420862158964
     # scaling_resolution_scalar:
 
-    # --- Post-refinement ---
-    # Enable per-image post-refinement (recommended). Default: true
-    # postrefinement_enable:
-    # Post-refinement algorithm: "rs" (reciprocal space), "rs2", "rs_hybrid"
-    # (analytical derivatives), or "eta_deff". Default: "rs"
-    # postrefinement_algorithm:
-    # Residual weighting in post-refinement: "unit", "variance", "gentle"
-    # (|I|/sigma^2, often best), or "extreme". Default: "unit"
-    # postrefinement_target_weighting:
-
-    # --- Merging ---
-    # High-resolution cutoff in Angstroms. Required — cctbx default is None and the
-    # merge will produce empty output without it. The LUTE model carries a 3.0 safety
-    # default but that value is almost certainly not right for your data.
+    # --- Merging resolution ---
+    # High-resolution cutoff in Angstroms. Required — cctbx default is None and
+    # xfel.merge uses it to define the resolution grid even in scaling-only mode.
+    # The LUTE model carries a 3.0 safety default but that value is almost certainly
+    # not right for your data.
     merging_d_min: ""
-    # Low-resolution cutoff in Angstroms. None = no low-resolution cutoff. Default: None
-    # merging_d_max:
-    # Merge Bijvoet (Friedel) pairs. Keep false for SAD/MAD to preserve anomalous signal.
+    # Merge Bijvoet (Friedel) pairs during scaling. Keep false for SAD/MAD experiments.
     # Default: false
     # merging_merge_anomalous:
-    # Apply the data's average unit cell to all crystals before merging. Default: true
-    # merging_set_average_unit_cell:
-    # Minimum redundancy required to output a merged reflection. Default: 2
-    # merging_minimum_multiplicity:
-    # Write redundancy as a separate column in the output MTZ. Default: false
-    # merging_include_multiplicity_column:
-    # Error model: "ha14", "ev11" (Evans 2011, default), "mm24" (Mittan-Moreau 2024),
-    # or "errors_from_sample_residuals". Default: "ev11"
-    # merging_error_model:
-    # Minimizer for the ev11 error model: "lbfgs" or "LevMar". Default: "lbfgs"
-    # merging_error_ev11_minimizer:
-
-    # --- Statistics ---
-    # Number of resolution shells for statistics output. Default: 20
-    # statistics_n_bins:
-    # Report per-frame maximum-likelihood statistics. Default: true
-    # statistics_report_ML:
-    # Reference MTZ file for CC-iso / R-iso calculation. Recommended if a reference
-    # structure is available. Default: ""
-    # statistics_cciso_mtz_file:
-    # Column name in the CCiso reference MTZ for structure factors. Default: "F"
-    # statistics_cciso_mtz_column_F:
 
     # --- Output ---
-    # Prefix for all output file names (e.g. "myexp_r0042"). Default: ""
+    # Prefix for output file names (e.g. "scaling_r0036"). Default: ""
     # output_prefix:
-    # Directory where output MTZ and log files are written. Default: ""
-    # output_output_dir:
-    # Temporary file directory. Defaults to output_output_dir. Default: ""
-    # output_tmp_dir:
+    # Directory for scaled output files. This path is stored in the LUTE database so
+    # CCTBXMerger can auto-resolve input_path from it. Required.
+    output_output_dir: ""
+    # Save scaled experiment and reflection files. Must be true for the output to be
+    # usable by a downstream CCTBXMerger task. Default: true
+    # output_save_experiments_and_reflections:
     # Log elapsed time for each pipeline step. Default: true
     # output_do_timing:
     # Log verbosity: 0 = log everything; higher values = less logging. Default: 0
     # output_log_level:
-    # Save filtered/selected experiment and reflection files alongside MTZ output.
-    # Set true when this run will be followed by a merge-only CCTBXMerger step.
-    # Default: true
-    # output_save_experiments_and_reflections:
+
+    # --- Statistics ---
+    # Number of resolution shells for statistics output. Default: 20
+    # statistics_n_bins:
 
     # --- Multiprocessing ---
     # Multiprocessing method. Only "mpi" is currently supported. Default: "mpi"
     # mp_method:
     # Set true when using the integrate worker with psana2/XTC2 data. Default: false
     # mp_psana2_mode:
-
-    # --- Parallel (MPI memory) ---
-    # MPI all-to-all communication stride. Set to the number of cores per node
-    # (e.g. 64) on large jobs to reduce memory pressure. Default: 1
-    # parallel_a2a:
 
   # Internal template rendering config. Do not set unless overriding.
   # lute_template_cfg:
