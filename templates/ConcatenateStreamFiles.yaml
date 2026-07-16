@@ -1,0 +1,33 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: StreamFileConcatenator (Executor)
+# Concatenates CrystFEL stream files from multiple runs into a single stream file
+# for use in downstream merging steps.
+ConcatenateStreamFiles:
+
+  # Root directory containing the stream files to concatenate.
+  # Auto-populated from the IndexCrystFEL output directory if left empty.
+  # in_file:
+
+  # Tag string identifying which stream files to concatenate.
+  # Auto-populated from the IndexCrystFEL output tag if left empty.
+  # tag:
+
+  # Path to the merged output stream file.
+  # Auto-populated from in_file and tag if left empty.
+  # out_file:

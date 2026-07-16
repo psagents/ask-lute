@@ -1,0 +1,89 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: HKLManipulator (Executor)
+# Runs CrystFEL's get_hkl to perform transformations on merged reflection lists.
+# Primarily used to convert HKL files to MTZ format for downstream structure solution.
+# NOTE: performing multiple manipulations in a single run is undefined behaviour —
+# run this Task in separate explicit steps for each transformation.
+# For full documentation: https://www.desy.de/~twhite/crystfel/manual-get_hkl.html
+ManipulateHKL:
+
+  # Output format: "mtz", "mtz-bij", "xds", or CrystFEL native format. Default: "mtz"
+  output_format: "mtz"
+
+  # Path to input HKL file.
+  # Auto-populated from MergePartialator output if left empty.
+  # in_file:
+
+  # Path to output file.
+  # Auto-populated with the appropriate extension from in_file if left empty.
+  # out_file:
+
+  # Path to unit cell file in PDB or CrystFEL format.
+  # Auto-populated from IndexCrystFEL cell_file if left empty.
+  # cell_file:
+
+  # Reindex according to this operator (e.g. "k,h,-l"). Optional.
+  # reindex:
+
+  # Expand reflections to fill the asymmetric unit of this point group. Optional.
+  # expand:
+
+  # Sum intensities of reflections related by this point group (twinning operator). Optional.
+  # twin:
+
+  # Allow reflections without a twin mate when using twin. Optional.
+  # no_need_all_parts:
+
+  # Apply uniform 10% noise to intensities. Optional.
+  # Optional — only used for simulation and testing; adds flat 10% noise to all intensities.
+  # Do not use on real experimental data.
+  # noise:
+
+  # Apply Poisson noise (intensities assumed in arbitrary units). Optional.
+  # Optional — only used for simulation and testing; adds photon-counting noise.
+  # Requires adu_per_photon to convert arbitrary units to photon counts.
+  # Do not use on real experimental data.
+  # poisson:
+
+  # ADU per photon, used with poisson to convert A.U. to photons. Optional.
+  # Optional — only meaningful when poisson is also set.
+  # adu_per_photon:
+
+  # Remove duplicate reflections according to symmetry. Optional.
+  # trim_centrics:
+
+  # Only write reflections that also appear in this template file. Optional.
+  # Optional — when provided, the output is filtered to only include the set of (h,k,l) indices
+  # present in the template HKL file. Useful for comparing two datasets on identical reflection lists.
+  # template:
+
+  # Multiply reflection intensities by their symmetric multiplicities. Optional.
+  # multiplicity:
+
+  # High-resolution cutoff in Angstroms (or anisotropic a*,b*,c* comma-separated). Optional.
+  # cutoff_angstroms:
+
+  # Remove reflections with d greater than this value (low-resolution cutoff in Angstroms). Optional.
+  # lowres:
+
+  # Override the apparent point group symmetry of the input data. Almost always omit this. Optional.
+  # symmetry:
+
+  # CrystFEL get_hkl binary path. Managed by LUTE internally.
+  # executable:

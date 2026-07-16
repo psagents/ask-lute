@@ -103,3 +103,63 @@ class MyTaskParameters(TaskParameters):
 | NeXus | `lute/io/models/nexus.py` |
 | XTC | `lute/io/models/xtc.py` |
 | Tests | `lute/io/models/tests.py` |
+
+---
+
+## SubmitSMD — Producer Parameters and Template Config
+
+`SubmitSMD` uses a **two-layer configuration**: command-line arguments (top-level fields)
+and a rendered producer config file (template-based).
+
+### 1. All detector/algorithm config goes under `producer_parameters:`
+
+Every field from `ProducerParameters` (detnames, getROIs, getAzIntPyFAIParams, etc.)
+**must** be nested under the `producer_parameters:` key — **not** placed directly under
+`SubmitSMD:`. Direct/flat placement bypasses Pydantic validation.
+
+```yaml
+SubmitSMD:
+  directory: "{{ work_dir }}"
+  producer_parameters:           # ← required nesting level
+    detnames: ["epix10k2M"]
+    getAzIntPyFAIParams:
+      epix10k2M:
+        poni_file: "/path/to/detector.poni"
+        npts: 512
+        int_units: "q_A^-1"
+```
+
+### 2. `lute_template_cfg` — auto-detected vs explicit
+
+`lute_template_cfg` controls which Jinja2 template is used to render the producer config
+file and where it is written:
+
+```python
+class TemplateConfig(BaseModel):
+    template_name: str   # "smd1_prod_config_template.py" or "smd2_prod_config_template.py"
+    output_path: str     # Full path where the rendered config file is written
+```
+
+**When psana is available** (standard conda install): both `template_name` and `output_path`
+are auto-populated by the `use_producer` validator based on whether psana1 or psana2 is
+detected.
+
+**When psana is NOT available** (virtual env install via `setup_lute -fi`): the validator
+raises `ValueError`. Both `producer` **and** `lute_template_cfg` **must** be set explicitly:
+
+```yaml
+SubmitSMD:
+  # Required in virtual env mode (psana not available)
+  producer: "{{ work_dir }}/smalldata_tools/lcls2_producers/smd_producer.py"
+  lute_template_cfg:
+    template_name: "smd2_prod_config_template.py"   # psana2 / LCLS-II
+    # template_name: "smd1_prod_config_template.py" # psana1 / LCLS-I
+    output_path: "{{ work_dir }}/smalldata_tools/lcls2_producers/prod_config_mfx.py"
+  producer_parameters:
+    detnames: ["jungfrau"]
+    ...
+```
+
+**Template names:**
+- `smd1_prod_config_template.py` — LCLS-I / psana1 (xtc files)
+- `smd2_prod_config_template.py` — LCLS-II / psana2 (xtc2 files)

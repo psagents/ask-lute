@@ -1,0 +1,69 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: SmallDataXESAnalyzer (MPIExecutor)
+# Processes XES (X-ray Emission Spectroscopy) data from a SmallData HDF5 file.
+# Calculates difference emission signal and bins it by scan variables.
+AnalyzeSmallDataXES:
+
+  # Path to the SmallData HDF5 file to analyze.
+  # Auto-populated from the SubmitSMD result if left empty.
+  smd_path: ""
+
+  # Name of the detector with emission data (e.g. "Jungfrau"). Required.
+  xes_detname: ""
+
+  # IPM variable name for X-ray intensity filtering (e.g. "ipm5/sum"). Required.
+  ipm_var: ""
+
+  # Name of the detector with scattering data, used for normalization. Optional.
+  # Optional — omit when no simultaneous X-ray scattering detector is available.
+  # When provided, the XES signal is normalized shot-by-shot by the scattering intensity,
+  # reducing sensitivity to X-ray intensity fluctuations.
+  # xss_detname:
+
+  # Scan variable(s) to bin the signal by. Can be a string or a list. Optional.
+  # Optional — when omitted, the difference signal is averaged over all laser-on shots
+  # without any binning. Provide when the experiment scans a delay stage, motor, or
+  # other parameter (e.g. "lxt", or ["lxt", "lxe_opa"]) so the signal can be resolved
+  # as a function of that variable.
+  # scan_var:
+
+  # Flip projection axes before computing the spectrum. Default projects along axis 1. Default: false
+  # Optional — the default projection (axis 1) is correct for most XES detector geometries.
+  # Enable when the dispersive axis is oriented along axis 0 of the detector image.
+  # invert_xes_axes:
+
+  # Rotate ROIs by this angle (degrees) before projection. Optional.
+  # Optional — only needed when the dispersive axis of the spectrometer crystal is tilted
+  # relative to the detector rows/columns. Leave unset for nominally aligned detectors.
+  # rot_angle:
+
+  # Load ROIs in batches of this size. Slower but reduces memory usage. 0 disables batching. Default: 0
+  # Optional — leave at 0 (disabled) for most runs. Set to a smaller number (e.g. 500) only
+  # when memory is limited and the analysis would otherwise run out of RAM.
+  # batch_size:
+
+  # Intensity thresholds for filtering low-quality shots.
+  # Uncomment the sub-fields to override the defaults; all sub-fields are optional.
+  intensity_thresholds:
+    # Minimum integrated scattering intensity — shots below this are rejected. Default: 10.0
+    # Optional — set lower if scattering signal is weak, or higher to reject more bad shots.
+    # min_Iscat:
+    # Minimum X-ray intensity measured by the IPM — shots below this are rejected. Default: 1000.0
+    # Optional — adjust to match the typical IPM signal range for this experiment.
+    # min_ipm:

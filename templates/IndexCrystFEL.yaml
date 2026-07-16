@@ -1,0 +1,157 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: CrystFELIndexer (Executor)
+# Runs CrystFEL's indexamajig to index Bragg peaks and produce a stream file.
+# Supports many indexing algorithms: xgandalf, mosflm, asdf, pinkIndexer, TakeTwo, etc.
+# For full documentation: https://www.desy.de/~twhite/crystfel/manual-indexamajig.html
+IndexCrystFEL:
+
+  # Path to the CrystFEL geometry file (.geom). Required.
+  geometry: ""
+
+  # Comma-separated list of indexing algorithms to try (e.g. "xgandalf,mosflm").
+  # Auto-detected from the data if left empty.
+  indexing: ""
+
+  # Integration radii as inner,middle,outer in pixels. Default: "4,5,7"
+  int_radius: "4,5,7"
+
+  # Unit cell tolerance as a,b,c (percent) and angle (degrees). Default: "5,5,5,1.5"
+  tolerance: "5,5,5,1.5"
+
+  # Integration method. Default: "rings-nocen"
+  # integration:
+
+  # Path to unit cell file in PDB or CrystFEL format.
+  # Optional — without it the indexer determines the unit cell from scratch each frame.
+  # Provide this when the cell is known to guide and constrain the indexing solution.
+  # cell_file:
+
+  # Path to input list file (.lst or .cxi).
+  # Auto-populated from FindPeaksSFX.out_file or RunCheetah result if left empty.
+  # in_file:
+
+  # Path to output stream file.
+  # Auto-populated to work_dir/<exp>_r<run>_<tag>.stream if left empty.
+  # out_file:
+
+  # Peak source: "cxi" for CXI files from peak finding, "peakfinder8" for on-the-fly finding. Optional.
+  # peaks:
+
+  # Enable multi-lattice indexing (find multiple crystals per frame). Default: false
+  # Optional — most SFX data contains single crystals; enable only when diffraction
+  # patterns consistently contain overlapping lattices (increases runtime significantly).
+  # multi:
+
+  # Do not check that the indexed cell matches the provided unit cell. Default: false
+  # no_check_cell:
+
+  # Do not verify that peaks are accounted for by the indexing solution. Default: false
+  # no_check_peaks:
+
+  # Skip the post-indexing refinement step. Default: false
+  # no_refine:
+
+  # Skip the revalidation step after refinement. Default: false
+  # no_revalidate:
+
+  # Do not remove weak peaks and retry indexing on failure. Default: false
+  # no_retry:
+
+  # X-ray wavelength estimate in Angstroms. Required by some indexing methods. Optional.
+  # wavelength_estimate:
+
+  # Camera distance estimate in meters. Required by some indexing methods. Optional.
+  # camera_length_estimate:
+
+  # Number of threads for indexing. Auto-detected from SLURM_NPROCS if not set.
+  # nthreads:
+
+  # Maximum number of additional threads some indexing algorithms can use. Optional.
+  # max_indexer_threads:
+
+  # Push integration to this many nm-1 beyond the apparent resolution limit. Default: "infinity"
+  # Optional — by default integration extends to "infinity" (no cutoff beyond the detector edge).
+  # Set to a finite value (e.g. 1.0) to integrate weak high-resolution data that the
+  # automatic resolution estimator might otherwise discard.
+  # push_res:
+
+  # Show timing data for performance monitoring. Default: false
+  # profile:
+
+  # Exclude non-hit frames from the stream file. Default: false
+  # no_non_hits_in_stream:
+
+  # Do not record peak lists in the stream file. Default: false
+  # no_peaks_in_stream:
+
+  # Do not record integrated reflections in the stream file. Default: false
+  # no_refls_in_stream:
+
+  # Wait at most this many seconds for input files to appear (-1 = wait forever). Default: 0
+  # wait_for_file:
+
+  # Remove directory parts from filenames in the input list before processing. Default: false
+  # basename:
+
+  # Add this prefix to filenames from the input list. Optional.
+  # prefix:
+
+  # Show integration diagnostics when this condition is met. Default: "none"
+  # int_diag:
+
+  # Write harvest parameters to a JSON file. Optional.
+  # harvest_file:
+
+  # Start numbering crystals at this value instead of 1. Optional.
+  # serial_offset:
+
+  # --- XGANDALF-specific parameters ---
+  # These parameters are only relevant when "xgandalf" is included in the indexing list above.
+  # All are optional — the defaults work well for most SFX datasets.
+  # Density of reciprocal space sampling (0=loosest, 9=finest). Optional.
+  # xgandalf_sampling_pitch:
+  # Number of gradient descent iterations. Optional.
+  # xgandalf_grad_desc_iterations:
+  # Relative tolerance of lattice vectors. Optional.
+  # xgandalf_tolerance:
+  # Maximum number of peaks used for indexing. Optional.
+  # xgandalf_max_peaks:
+  # Use fast mode: sets sampling_pitch=2 and grad_desc_iterations=3. Default: false
+  # xgandalf_fast_execution:
+  # Minimum allowed lattice vector length in Angstroms. Optional.
+  # xgandalf_min_lattice_vector_length:
+  # Maximum allowed lattice vector length in Angstroms. Optional.
+  # xgandalf_max_lattice_vector_length:
+  # Force the found cell to exactly match the provided cell. Optional.
+  # xgandalf_no_deviation_from_provided_cell:
+
+  # --- TakeTwo-specific parameters ---
+  # These parameters are only relevant when "taketwo" is included in the indexing list above.
+  # All are optional — the defaults are appropriate in most cases.
+  # Minimum number of vectors for TakeTwo to consider a solution. Optional.
+  # taketwo_member_threshold:
+  # Lattice vector length tolerance in Angstroms. Optional.
+  # taketwo_len_tolerance:
+  # Angle tolerance in degrees. Optional.
+  # taketwo_angle_tolerance:
+  # Matrix trace tolerance in degrees. Optional.
+  # taketwo_trace_tolerance:
+
+  # CrystFEL indexamajig binary path. Managed by LUTE internally.
+  # executable:

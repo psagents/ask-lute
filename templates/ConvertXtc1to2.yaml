@@ -1,0 +1,49 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: Xtc1to2Converter (Executor)
+# Converts LCLS1 XTC files to LCLS2 XTC2 format for use with psana2.
+ConvertXtc1to2:
+
+  # Path to the output XTC2 file. Required.
+  output_file: ""
+
+  # Describes how to read each detector from psana1 and write it to XTC2.
+  # The top-level keys become the detector names in the XTC2 file.
+  # Add one entry per detector to convert. Required.
+  xtc1_access_pattern:
+    # Replace <detector_name> with the desired XTC2 detector name (e.g. "epix10k2M").
+    <detector_name>:
+      - # Name this field will have in the XTC2 file (e.g. "calib"). Required.
+        xtc2_attr_name: ""
+        # psana1 object name (e.g. "epix10k2M" → psana.Detector("epix10k2M")). Required.
+        object_name: ""
+        # psana1 object type (e.g. "psana.Detector", "psana.Bld.BldDataEBeamV7"). Required.
+        object_type: ""
+        # Field or method on the psana1 object used to get per-event data.
+        # Use a string for simple attributes (e.g. "calib"),
+        # or a [method, attribute] list for chained access (e.g. ["get", "ebeamPhotonEnergy"]). Required.
+        object_field_name: ""
+
+  # Node ID for the detector in the XTC2 file. Default: "1"
+  # node_id:
+
+  # Path to a CSV file with specific event numbers to process. Processes all events if not set.
+  # eventfile:
+
+  # Maximum number of events to process. Overridden by eventfile if both are provided. Optional.
+  # nevents:

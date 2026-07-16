@@ -1,0 +1,93 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: BayFAIOptimizer / BayFAIOptimizer2 (MPIExecutor)
+# Optimizes LCLS detector geometry using PyFAI coupled with Bayesian Optimization.
+# BayFAIOptimizer is for LCLS1 data.
+# BayFAIOptimizer2 targets LCLS2 data and sets extra environment variables (PS_SRV_NODES, PS_EB_NODES).
+BayFAI:
+
+  # Detector name used to locate the calibration metrology file (e.g. "epix10k2M"). Required.
+  detname: ""
+
+  # Calibrant name supported by PyFAI (e.g. "AgBh", "CeO2", "LaB6"). Required.
+  # See https://github.com/silx-kit/pyFAI/tree/main/src/pyFAI/resources/calibration
+  calibrant: ""
+
+  # Path to the powder diffraction image used for calibration.
+  # Auto-populated from the SmallData path for this experiment/run if left empty.
+  # powder:
+
+  # Path to the input metrology .data file containing the detector geometry to calibrate.
+  # Auto-populated from the psana1 calibration directory for this experiment/run if left empty.
+  # in_file:
+
+  # Path to the output .data file for the optimized geometry.
+  # Auto-populated to work_dir/geom/<run>-end.data if left empty.
+  # out_file:
+
+  # Apply preprocessing to the powder image before calibration. Default: false
+  # preprocess:
+
+  # Center of the Bayesian Optimization search space for each geometry parameter.
+  # Keys: dist (m), poni1 (m), poni2 (m), rot1 (rad), rot2 (rad), rot3 (rad).
+  center:
+    dist: 0.1
+    poni1: 0.0
+    poni2: 0.0
+    rot1: 0.0
+    rot2: 0.0
+    rot3: 0.0
+
+  # Search bounds as offsets from center for each geometry parameter (delta values).
+  # Keys: dist, poni1, poni2, rot1, rot2, rot3.
+  bounds:
+    dist: [-0.05, 0.05]
+    poni1: [-0.005, 0.005]
+    poni2: [-0.005, 0.005]
+    rot1: [-0.1, 0.1]
+    rot2: [-0.1, 0.1]
+    rot3: [-0.1, 0.1]
+
+  # Resolution (step size) of the search grid for each geometry parameter. Optional.
+  # resolutions:
+  #   dist: 0.001
+  #   poni1: 0.0001
+  #   poni2: 0.0001
+  #   rot1: 0.02
+  #   rot2: 0.02
+  #   rot3: 0.02
+
+  # List of geometry parameters to hold fixed during optimization. Default: ["rot3"]
+  # fixed:
+
+  # Bayesian Optimization hyperparameters.
+  bo_params:
+    # Number of random samples to initialize the Gaussian Process model. Default: 20
+    # n_samples:
+    # Total number of Bayesian Optimization iterations. Default: 80
+    # n_iterations:
+    # Maximum number of Bragg rings to search for during calibration. Default: 6
+    # max_rings:
+    # If true, initialize samples around the center of the search space; otherwise random. Default: true
+    # prior:
+    # Exploration-exploitation trade-off for the UCB acquisition function (higher = more exploration). Default: 1.96
+    # beta:
+    # Size of the refinement window around the best parameters found. Default: 5
+    # step:
+    # Random seed for reproducibility. Optional.
+    # seed:

@@ -1,0 +1,77 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: HKLComparer (Executor)
+# Runs CrystFEL's compare_hkl to calculate figures of merit (e.g. Rsplit, CC1/2)
+# on merged reflection data. Typically run after MergePartialator.
+# For full documentation: https://www.desy.de/~twhite/crystfel/manual-compare_hkl.html
+CompareHKL:
+
+  # Point group symmetry for the comparison (e.g. "mmm", "4/m", "m-3m"). Required.
+  symmetry: ""
+
+  # Figure of merit to calculate. Options: "Rsplit", "CC", "CCstar", "CCano",
+  # "CRDano", "Rano", "Rmerge", "I/sigI". Default: "Rsplit"
+  fom: "Rsplit"
+
+  # Space-separated paths to the two HKL files to compare.
+  # Auto-populated from MergePartialator output (.hkl1 and .hkl2) if left empty.
+  # in_files:
+
+  # Path to unit cell file in PDB or CrystFEL format.
+  # Auto-populated from IndexCrystFEL cell_file if left empty.
+  # cell_file:
+
+  # Number of resolution shells for statistics. Default: 10
+  # nshells:
+
+  # Path to write per-shell statistics file.
+  # Auto-populated from the MergePartialator output path if left empty.
+  # shell_file:
+
+  # Discard reflections with I/sigma(I) below this value ("-infinity" means no cutoff). Optional.
+  # Optional — by default all reflections are included regardless of I/sigma.
+  # Set (e.g. to 0.0) to exclude very weak or negative reflections from the FOM calculation,
+  # which can otherwise inflate statistics at high resolution.
+  # sigma_cutoff:
+
+  # Ignore reflections with negative intensities. Default: false
+  # Optional — negative intensities arise from background over-subtraction and are unphysical.
+  # Enable to simply skip them in the FOM calculation.
+  # Mutually exclusive with zero_negs — choose one or the other, not both.
+  # ignore_negs:
+
+  # Set negative intensities to zero instead of discarding. Default: false
+  # Optional — a softer alternative to ignore_negs: keeps the reflection in the statistics
+  # but prevents it from contributing negative intensity to the FOM.
+  # Mutually exclusive with ignore_negs — choose one or the other, not both.
+  # zero_negs:
+
+  # Low resolution cutoff as 1/d in m-1. Use either rmin or lowres, not both. Optional.
+  # rmin:
+
+  # Low resolution cutoff in Angstroms. Use either lowres or rmin, not both. Optional.
+  # lowres:
+
+  # High resolution cutoff as 1/d in m-1. Use either rmax or highres, not both. Optional.
+  # rmax:
+
+  # High resolution cutoff in Angstroms. Use either highres or rmax, not both. Optional.
+  # highres:
+
+  # CrystFEL compare_hkl binary path. Managed by LUTE internally.
+  # executable:

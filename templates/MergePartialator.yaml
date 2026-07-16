@@ -1,0 +1,147 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. mfxl1013621)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.2.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: PartialatorMerger (Executor)
+# Runs CrystFEL's partialator to merge indexed reflections into a complete dataset.
+# For full documentation: https://www.desy.de/~twhite/crystfel/manual-partialator.html
+MergePartialator:
+
+  # Point group symmetry for merging (e.g. "mmm", "4/m", "m-3m"). Required.
+  symmetry: ""
+
+  # Path to input stream file.
+  # Auto-populated from ConcatenateStreamFiles output if left empty.
+  # in_file:
+
+  # Path to output HKL file.
+  # Auto-populated with .hkl extension from in_file if left empty.
+  # out_file:
+
+  # Partiality model: "unity" (default), "xsphere", "offset", or "ggpm".
+  # Optional — "unity" assumes all reflections are fully recorded (appropriate for short-pulse SFX).
+  # Use "xsphere" or "ggpm" when partial reflections need explicit modelling (e.g. longer pulses).
+  # model:
+
+  # Number of cycles of scaling and post-refinement. Optional.
+  # niter:
+
+  # Minimum number of measurements for a reflection to be included in the merge. Default: 2
+  # min_measurements:
+
+  # Reject crystals with |relative B-factor| above this value (sq Angstroms). Default: 100
+  # max_rel_B:
+
+  # Merge reflections up to this many nm-1 beyond the apparent resolution limit. Optional.
+  # push_res:
+
+  # Only include crystals diffracting to at least this resolution (Angstroms). Optional.
+  # min_res:
+
+  # Maximum intensity of a reflection to include (to exclude saturated reflections). Optional.
+  # max_adu:
+
+  # Number of threads for parallel merging. Auto-detected from SLURM_NPROCS if not set.
+  # nthreads:
+
+  # Ignore the first n crystals in the stream file. Default: 0
+  # start_after:
+
+  # Stop after processing n crystals (0 = process all). Default: 0
+  # stop_after:
+
+  # Incident polarisation specification — refer to CrystFEL docs for the format. Optional.
+  # Optional — omit to use the default horizontal polarisation correction.
+  # Set when the beam polarisation is known to differ (e.g. at undulator beamlines with vertical pol.).
+  # Mutually exclusive with no_polarisation.
+  # polarisation:
+
+  # Synonym for --polarisation=none: disable polarisation correction. Optional.
+  # Optional — omit to apply the default polarisation correction.
+  # Enable only for unpolarised sources or when testing/debugging merging quality.
+  # Mutually exclusive with polarisation.
+  # no_polarisation:
+
+  # Disable scaling of crystal intensities. Optional.
+  # Optional — scaling is on by default to correct per-crystal intensity variations.
+  # Enable for diagnostic runs to check whether scaling is improving data quality.
+  # no_scale:
+
+  # Disable the Debye-Waller (B-factor) component of scaling. Optional.
+  # Optional — B-factor correction is applied by default as part of scaling.
+  # Enable when crystals are too small or poorly diffracting to reliably estimate a B-factor.
+  # no_Bscale:
+
+  # Disable the orientation (partiality) model in post-refinement. Optional.
+  # Optional — post-refinement is on by default when using a non-unity partiality model.
+  # Enable when using the "unity" model (which has no orientation parameters to refine).
+  # no_pr:
+
+  # Disable rejection of crystals based on deltaCC1/2. Optional.
+  # Optional — outlier crystal rejection via deltaCC1/2 is on by default.
+  # Enable for diagnostic runs or when you want all crystals included regardless of quality.
+  # no_deltacchalf:
+
+  # Disable cross-validation (for testing purposes only). Optional.
+  # Optional — cross-validation (free-R equivalent) is on by default.
+  # Enable only when running quick diagnostic tests; do not use for final merged datasets.
+  # no_free:
+
+  # Set the apparent symmetry to this point group (for resolving indexing ambiguities). Optional.
+  # Optional — only needed when the data has an indexing ambiguity (i.e. the Laue group has
+  # higher symmetry than the point group, e.g. P 4 vs 4/m). Set to the Laue group so
+  # partialator can use the ambiguity operator to resolve the hand.
+  # set_symmetry:
+
+  # Ambiguity operator for resolving indexing ambiguities (e.g. "k,h,-l"). Optional.
+  # Optional — only needed alongside set_symmetry when a specific reindexing operator is
+  # known. Without it, partialator attempts to auto-detect the ambiguity.
+  # operator:
+
+  # Force X-ray bandwidth (as a fraction, e.g. 0.0013 = 0.13%). Optional.
+  # Optional — partialator reads the bandwidth from data headers by default.
+  # Set when headers are unreliable or missing, or to test sensitivity to this parameter.
+  # force_bandwidth:
+
+  # Force the initial profile radius in nm-1. Optional.
+  # Optional — the profile radius is estimated from data by default.
+  # Set when the automatic estimate is poor (e.g. very thin crystals or poor diffraction).
+  # force_radius:
+
+  # Force the X-ray wavelength in Angstroms. Optional.
+  # Optional — the wavelength is read from data headers by default.
+  # Set when headers are missing or known to be wrong (e.g. incorrectly calibrated monochromator).
+  # force_lambda:
+
+  # Read dataset assignments from this file (custom split into half-datasets). Optional.
+  # Optional — by default partialator randomly splits crystals into two half-datasets for CC1/2.
+  # Provide when you need a reproducible or physically meaningful split (e.g. odd/even runs,
+  # or two distinct crystal batches) rather than a random one.
+  # custom_split:
+
+  # Write per-crystal parameters to file after every refinement cycle. Default: false
+  # output_every_cycle:
+
+  # Suppress writing of log files needed for diagnostic plots and graphs. Default: false
+  # Optional — log files are written by default; they are needed by CrystFEL's post-processing
+  # tools (e.g. check_hkl, compare_hkl). Enable only to reduce disk usage on final production runs.
+  # no_logs:
+
+  # Write harvest parameters to a JSON file. Optional.
+  # harvest_file:
+
+  # CrystFEL partialator binary path. Managed by LUTE internally.
+  # executable:

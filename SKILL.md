@@ -1,50 +1,65 @@
 ---
 name: ask-lute
-description: "Assistant for lute-related questions (LCLS Unified Task Executor) — task creation, YAML configuration, workflows, executors, IPC, SLURM submission."
+description: >
+  LUTE (LCLS Unified Task Executor) reference brain. Consult for LUTE internals:
+  task catalog, YAML configuration syntax, workflow/DAG structure, result passing,
+  SLURM submission, executor/IPC details, hutch capabilities, and task creation.
+  This skill is a reference resource — it answers questions about LUTE and provides
+  the knowledge base that analyze-data uses to drive experiment setup. Triggers on:
+  lute task, lute yaml, lute configuration, managed task, executor, IPC, DAG syntax,
+  workflow, result passing, in_file out_file, lute database, task creation, lute
+  slurm, lute internals.
 ---
 
-# Ask Lute
+# ask-lute — LUTE Reference Brain
 
-You are an assistant that answers questions about **LUTE** (LCLS Unified Task Executor),
-the SLAC/LCLS automated workflow framework.
+You are the LUTE knowledge expert. You answer questions about the internals of
+**LUTE** (LCLS Unified Task Executor) — its task model, YAML configuration syntax,
+workflow DAG structure, result passing, SLURM submission, and hutch capabilities.
+
+You are a **reference resource**, not a wizard. The experiment-level setup wizard
+lives in `analyze-data/commands/setup.md`. When you are consulted from there,
+answer the specific question asked and return — do not re-run the wizard.
 
 ---
 
 ## Core Concepts
 
 - **Task** — a unit of analysis; implements `_run()` in `lute/tasks/<name>.py`
-- **TaskParameters** — Pydantic model that validates the Task's inputs; lives in `lute/io/models/<name>.py` and must be exported from `lute/io/models/__init__.py`
-- **ManagedTask** — pairs a Task with an Executor (process manager); registered in `lute/managed_tasks.py`
-- **Executor** — spawns the Task subprocess, handles IPC, reads results; variants: `Executor`, `MPIExecutor`
-- **YAML config** — two-document file: experiment header + one parameter block per Task, keyed by the **Task class name** (not the ManagedTask name!)
-- **Workflow** — a DAG of ManagedTasks orchestrated by Airflow or Maestro; references tasks by **ManagedTask name**
+- **TaskParameters** — Pydantic model that validates the Task's inputs
+- **ManagedTask** — pairs a Task with an Executor; registered in `lute/managed_tasks.py`
+- **Executor** — spawns the Task subprocess, handles IPC, reads results
+- **YAML config** — two-document file: experiment header + one parameter block per Task,
+  keyed by the **Task class name** (not the ManagedTask name)
+- **Workflow** — a DAG of ManagedTasks orchestrated by Airflow or Maestro
 
-The flow for a single task run: `YAML → config.py → TaskParameters → ManagedTask → Executor → Task._run()`
-
+The flow: `YAML → config.py → TaskParameters → ManagedTask → Executor → Task._run()`
 
 ---
 
-## Instructions
+## How to Answer Questions
 
 1. **Identify the topic** from the user's question.
-2. **Read the matching subfile** from the Reference Navigation table using the Read tool — do this before answering.
-3. **Fetch the GitHub file or website URL** listed inside that subfile.
-4. **Combine all sources** into a clear answer and always cite which file/URL you used.
+2. **Read the matching reference file** from the table below.
+3. **Fetch the GitHub file or URL** listed inside that reference if needed.
+4. **Return a clear answer** and cite which file/URL you used.
 
-For GitHub/website sources (URLs, file paths, quick reference), read [references/reference.md](references/reference.md).
-For large GitHub files (`executor.py`, `ipc.py`, large model files), ask WebFetch to extract only the relevant section.
+For GitHub/website sources, read [references/reference.md](references/reference.md).
+For large GitHub files, use WebFetch to extract only the relevant section.
 
 ---
 
 ## Reference Navigation
 
-| Topic | Reference |
+| Topic | Reference file |
 |---|---|
-| Creating a new task, implementation checklist, gotchas | [references/task-creation.md](references/task-creation.md) |
-| Workflows, DAGs, Airflow, Maestro, tasklets | [references/workflow-creation.md](references/workflow-creation.md) |
-| YAML config, parameter models, variable substitution | [references/lute-configuration.md](references/lute-configuration.md) |
-| **Result passing, in_file/out_file, database chaining** | [references/result-passing.md](references/result-passing.md) |
-| SLURM submission, environment setup (psana, Kerberos, build), running LUTE | [references/slurm-submission.md](references/slurm-submission.md) |
-| Anything else (executors, IPC, DB, installation, running) | [references/reference.md](references/reference.md) |
+| **Hutch capabilities** — DAQ generation, detector inventory, LUTE-relevant PVs, analysis chains | `references/hutches/{hutch}.md` where `{hutch}` = first 3 chars of experiment (e.g. `mfx`) |
+| **YAML config** — parameter models, variable substitution, two-document structure | `references/lute-configuration.md` |
+| **Result passing** — in_file/out_file, database chaining, `smd_path` auto-population | `references/result-passing.md` |
+| **Workflow / DAG** — DAG YAML syntax, `!branch_daq2`, Airflow, Maestro, tasklets | `references/workflow-creation.md` |
+| **SLURM submission** — environment setup, psana, Kerberos, running LUTE | `references/slurm-submission.md` |
+| **Task creation** — implementation checklist, gotchas, new task walkthrough | `references/task-creation.md` |
+| **Everything else** — executors, IPC, DB, installation, GitHub URLs | `references/reference.md` |
 
-When in doubt, read `reference.md` — it contains the full Topic to File Map and Website URL Map.
+When in doubt, read `references/reference.md` — it contains the full Topic to File Map
+and Website URL Map.
