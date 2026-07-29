@@ -53,6 +53,8 @@ For large GitHub files, use WebFetch to extract only the relevant section.
 
 | Topic | Reference file |
 |---|---|
+| **Hutch+technique setup notes** — wizard guidance, fields to verify, failure modes, alternatives | `references/{hutch}/{technique}.md` e.g. `references/mfx/sfx.md`; use `references/{hutch}/default.md` when technique is unknown |
+| **Full experiment YAML starting point** — pre-filled two-doc config per hutch+technique | `templates/{hutch}/{technique}.yaml` e.g. `templates/mfx/xes.yaml` — starting point only, verify every field |
 | **Hutch capabilities** — DAQ generation, detector inventory, LUTE-relevant PVs, analysis chains | `references/hutches/{hutch}.md` where `{hutch}` = first 3 chars of experiment (e.g. `mfx`) |
 | **YAML config** — parameter models, variable substitution, two-document structure | `references/lute-configuration.md` |
 | **Result passing** — in_file/out_file, database chaining, `smd_path` auto-population | `references/result-passing.md` |
@@ -60,6 +62,21 @@ For large GitHub files, use WebFetch to extract only the relevant section.
 | **SLURM submission** — environment setup, psana, Kerberos, running LUTE | `references/slurm-submission.md` |
 | **Task creation** — implementation checklist, gotchas, new task walkthrough | `references/task-creation.md` |
 | **Everything else** — executors, IPC, DB, installation, GitHub URLs | `references/reference.md` |
+
+### Available hutch+technique references
+
+| Hutch | Technique | Reference | Template |
+|---|---|---|---|
+| MFX | SFX (CrystFEL) | `references/mfx/sfx.md` | `templates/mfx/sfx.yaml` |
+| MFX | Geometry calibration (BayFAI) | `references/mfx/sfx.md` §Geometry Calibration | `templates/mfx/bayfai.yaml` |
+| MFX | TR-SAXS/WAXS | `references/mfx/saxs.md` | `templates/mfx/saxs.yaml` |
+| MFX | SAXS geometry calibration (BayFAI) | `references/mfx/saxs.md` §BayFAI Calibration | `templates/mfx/bayfai.yaml` |
+| MFX | XES (Von Hamos) | `references/mfx/xes.md` | `templates/mfx/xes.yaml` |
+| MFX | unknown | `references/mfx/default.md` | empty per-task templates |
+| RIX | RIXS (ChemRIXS/qRIXS) | `references/rix/rixs.md` | `templates/rix/rixs.yaml` |
+| RIX | unknown | `references/rix/default.md` | empty per-task templates |
+| CXI | any | `references/cxi/default.md` | `templates/mfx/sfx.yaml` (structural ref) |
+| other hutches | any | `references/hutches/{hutch}.md` (overview only) | empty per-task templates |
 
 When in doubt, read `references/reference.md` — it contains the full Topic to File Map
 and Website URL Map.

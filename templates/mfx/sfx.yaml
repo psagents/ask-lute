@@ -1,0 +1,119 @@
+%YAML 1.3
+# ============================================================
+# MFX SFX — CrystFEL pipeline (Cheetah hit-finding path)
+# Starting point only — verify every field with the user.
+# Alternative: replace RunCheetah with FindPeaksSFX (psana-native).
+# Alternative indexer: replace IndexCrystFEL with IndexCCTBXXFEL.
+# ============================================================
+---
+title: "MFX SFX"                          # optional description
+experiment: ""                             # e.g. mfxl1013621 — VERIFY WITH USER
+run: ""                                    # auto-populated at runtime; leave empty
+date: ""                                   # YYYY/MM/DD
+lute_version: 0.2.0
+task_timeout: 3600
+work_dir: ""                               # e.g. /sdf/data/lcls/ds/mfx/<exp>/results/lute_output — VERIFY WITH USER
+---
+
+# ── Hit finding: Cheetah (default at MFX) ─────────────────────────────────────
+RunCheetah:
+  # psana data source string — VERIFY WITH USER
+  source: ""                               # e.g. "exp=mfxl1013621:run=27"
+
+  # Path to the OM Cheetah configuration YAML — VERIFY WITH USER
+  om_config: ""                            # e.g. "{{ work_dir }}/om_cheetah.yaml"
+
+  cheetah_subconfig:
+    data_retrieval_layer:
+      data_sources:
+        detector_data:
+          # Detector psana alias — VERIFY WITH USER via run.detnames
+          psana_name: "jungfrau"           # Jungfrau 16M (MFX standard since Jul 2025); may be epix10k2M for older runs
+
+        detector_distance:
+          # PV for detector Z position — VERIFY WITH USER
+          psana_name: "MFX:ROB:CONT:POS:Z"  # Jungfrau/ePix10k2M; use MFX:DET:MMS:04.RBV for Rayonix
+          value: ""                        # leave empty to read from PV at runtime
+
+    cheetah:
+      # Output directory for CXI hit files — VERIFY WITH USER
+      processed_directory: ""             # e.g. "{{ work_dir }}/cheetah_hits"
+      # Filename prefix for CXI files — VERIFY WITH USER
+      processed_filename_prefix: ""       # e.g. "mfxl1013621-27"
+
+    crystallography:
+      # Path to CrystFEL geometry file — VERIFY WITH USER (from BayFAI calibration run)
+      geometry_file: ""                   # same .geom from BayFAI — e.g. "{{ work_dir }}/bayFAI_output/jungfrau.geom"
+      # Minimum peaks to classify as a hit — adjust based on hit rate
+      min_num_peaks_for_hit: 15           # typical: 15–25; raise if too many false hits
+
+    peakfinder8_peak_detection:
+      # ADU threshold — VERIFY WITH USER; adjust based on hit rate feedback
+      adc_threshold: "300"                # typical for Jungfrau; may be 150–500 depending on gain
+      # Signal-to-noise per peak — adjust based on hit rate
+      minimum_snr: "7.0"                  # typical: 6–8
+
+# ── Indexing: CrystFEL (default) ──────────────────────────────────────────────
+# Alternative: see IndexCCTBXXFEL block below (commented out).
+# CrystFEL requires an explicit .geom file converted from the BayFAI .poni output.
+# CCTBX.XFEL does NOT — it loads calibration automatically from the psana database.
+IndexCrystFEL:
+  # Path to CrystFEL geometry file — BayFAI outputs this directly; no conversion needed.
+  # FILL IN after BayFAI calibrant run. Output at: {lute_output_dir}/geom/r{run:04d}.geom
+  geometry: ""                            # e.g. "{{ work_dir }}/geom/r0021.geom"
+
+  # Indexing algorithm — xgandalf is robust default for most proteins
+  indexing: "xgandalf"                    # alternatives: mosflm, pinkindexer (large cells), asdf
+
+  # Integration radii (inner,middle,outer) in pixels
+  int_radius: "4,5,7"
+
+  # Unit cell tolerance (a,b,c percent; angle degrees)
+  tolerance: "5,5,5,1.5"
+
+  # Path to unit cell file (.cell or .pdb) — leave commented if unit cell unknown
+  # cell_file: ""                         # FILL IN when unit cell is known
+
+  # Multi-lattice indexing — uncomment only if multiple lattices per frame expected
+  # multi: true
+
+# ── Alternative indexing: CCTBX.XFEL ─────────────────────────────────────────
+# Uncomment this block and comment out IndexCrystFEL above to use CCTBX.XFEL.
+# CCTBX loads detector geometry automatically from the psana calibration database —
+# no explicit geometry file is needed here. The BayFAI .data output must be deployed
+# to the psana calib database first (ask instrument scientist for deploy command).
+# For CCTBX parameters, delegate to @ask-cctbx-xfel.
+# IndexCCTBXXFEL:
+#   # No geometry field — calibration loaded automatically from psana database
+#   # All other parameters: ask @ask-cctbx-xfel
+
+# ── Stream concatenation ───────────────────────────────────────────────────────
+# No user parameters needed — in_file auto-populated from IndexCrystFEL result.
+ConcatenateStreamFiles: {}
+
+# ── Merging: partialator ───────────────────────────────────────────────────────
+MergePartialator:
+  # Point group symmetry — REQUIRED; ask the user for space group / point group
+  symmetry: ""                            # e.g. "mmm" (orthorhombic), "4/m", "m-3m" (cubic)
+
+  # Partiality model — unity is appropriate for short-pulse SFX
+  # model: "unity"                        # uncomment to set explicitly; default is unity
+
+  # Number of post-refinement iterations
+  # niter: 3                              # uncomment to override default
+
+# ── Merge statistics ───────────────────────────────────────────────────────────
+# No user parameters needed — input auto-populated from MergePartialator result.
+CompareHKL: {}
+
+# ── Optional: HKL manipulation (format conversion / scaling) ──────────────────
+# Uncomment when mtz output or scaling is needed.
+# ManipulateHKL: {}
+
+# ── Optional: Molecular replacement (requires reference PDB) ──────────────────
+# Uncomment when a reference structure is available.
+# DimpleSolve: {}
+
+# ── Optional: Ab initio phasing with SHELXC ───────────────────────────────────
+# Uncomment for anomalous phasing when no reference structure exists.
+# RunSHELXC: {}

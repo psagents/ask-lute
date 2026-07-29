@@ -47,11 +47,9 @@ All aliases below must be confirmed with the user via `event_keys` (psana1) or
 
 | Role | Typical psana alias | psana DetInfo source | Notes |
 |---|---|---|---|
-| Main SFX / scattering area det | `epix10k2M` | `MfxEndstation.0:Epix10ka2M.0` | ePix10k2M; primary for SFX and SAXS |
-| SFX large-format (arriving 2025) | `jungfrau` | `MfxEndstation.0:Jungfrau.0` | Jungfrau 16M; replaces ePix10k2M for SFX |
-| XES / XAS spectrometer | `epix_1` | `MfxEndstation.0:Epix100a.1` | ePix100a; dispersive spectrometer |
+| Main SFX / scattering area det | `jungfrau` | `MfxEndstation.0:Jungfrau.0` | Jungfrau 16M; primary for SFX and SAXS since Jul 2025 |
+| XES / XAS spectrometer | `epix100_0` | `MfxEndstation.0:Epix100a.0` | ePix100a; dispersive spectrometer |
 | Wide-angle SAXS | `Rayonix` | `MfxEndstation.0:Rayonix.0` | Rayonix MX340-HS; not always installed |
-| Beam intensity monitor | `wave8` | `MfxEndstation.0:Wave8.0` | Wave8 waveform digitizer; beam monitor diodes |
 
 ---
 
@@ -125,7 +123,7 @@ to read the detector distance per run.
 
 | EPICS PV | Detector | Notes |
 |---|---|---|
-| `MFX:ROB:CONT:POS:Z` | ePix10k2M | Robot Z-axis position; detector distance in mm |
+| `MFX:ROB:CONT:POS:Z` | jungfrau / ePix10k2M | Robot Z-axis position; detector distance in mm |
 | `MFX:DET:MMS:04.RBV` | Rayonix | Motor readback; detector distance in mm |
 
 ### Standard Shot Flags (always present in SmallData)
@@ -148,7 +146,7 @@ to read the detector distance per run.
 | TR-SAXS / TR-WAXS | `SubmitSMD` (`getAzIntPyFAIParams` or `getAzIntParams`) → `SmallDataXSSAnalyzer` |
 | XES | `SubmitSMD` (`getROIs` + `writeArea=True`) → `SmallDataXESAnalyzer` |
 | TR-XAS | `SubmitSMD` (`getROIs` for spectrometer) → `SmallDataXASAnalyzer` |
-| Geometry calibration | `SubmitSMD` → `BayFAIOptimizer` (LCLS-I) or `BayFAIOptimizer2` (LCLS-II) — separate calibrant run |
+| Geometry calibration | `SubmitSMD` (`detSumAlgos` on area detector) → `BayFAIOptimizer` (LCLS-I) or `BayFAIOptimizer2` (LCLS-II) — separate calibrant run |
 
 **Hutch YAML config in LUTE repo:** `config/mfx.yaml`
 
@@ -213,3 +211,15 @@ XTC / XTC2 data
   120 Hz), use `get_intg` in `producer_parameters` with the Andor as `intg_main`.
 - **BayFAI calibrant at MFX:** AgBh or LaB₆ powder for geometry optimization before
   the main experiment.
+- **`detSumAlgos` for BayFAI:** `detSumAlgos` accumulates detector frames across all
+  events in a run into a single image. It is **not** azimuthal integration. BayFAI
+  takes this accumulated image and fits the AgBh powder ring positions to optimize
+  detector geometry. Use `"calib_max"` (per-pixel maximum across all shots) — this
+  outperforms `"calib"` (sum) for BayFAI because bright AgBh rings stand out more
+  clearly against background noise in a max-projection. Configure on the area detector
+  (e.g. `jungfrau`) in `SubmitSMD.producer_parameters` for the geometry calibration run:
+  ```yaml
+  detSumAlgos:
+    jungfrau:
+      - "calib_max"
+  ```
