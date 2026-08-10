@@ -15,23 +15,39 @@ task_timeout: 600
 # Main working directory — must exist and be writable; database and outputs land here
 work_dir: ""
 ---
-# ManagedTask: SmallDataProducer / SmallDataProducer2 / SmallDataProducer2Test /
-#              SmallDataProducerSpack / SmallDataProducerXpp  (Executor)
+# ManagedTask: SmallDataProducer  (psana1 / LCLS-I, sources conda1)
+#              SmallDataProducer2 (psana2 / LCLS-II, sources conda2)
 # Runs smalldata_tools to produce a reduced HDF5 file from raw LCLS data.
-# SmallDataProducer           — LCLS1 (psana1 environment).
-# SmallDataProducer2          — LCLS2 (psana2 conda environment).
-# SmallDataProducer2Test      — LCLS2 using the psana2 test conda environment.
-# SmallDataProducerSpack      — LCLS2 using the spack-built psana2 environment.
-# SmallDataProducerXpp        — LCLS2 using the XPP DRP GPU environment.
+#
+# VIRTUAL ENV NOTE (setup_lute -fi / pip-installed lute-lcls):
+#   psana is NOT available in the isolated venv. Two parameters become REQUIRED:
+#     1. producer       — must be set explicitly (auto-detection via psana fails)
+#     2. lute_template_cfg — must be set explicitly (template selection via psana fails)
+#   All detector/algorithm configuration MUST go under producer_parameters: (nested).
+#
 SubmitSMD:
 
+  # ── Required in virtual env mode ──────────────────────────────────────────
+  # Path to the smalldata_tools producer Python script.
+  # Auto-populated to the standard path under <exp>/results/smalldata_tools
+  # when psana is available (standard conda install). MUST be set explicitly
+  # when running from an isolated virtual environment.
+  # producer: "{{ work_dir }}/smalldata_tools/lcls2_producers/smd_producer.py"
+
+  # Template rendering config for the producer config file.
+  # Auto-selected based on psana version when psana is available.
+  # MUST be set explicitly when running from an isolated virtual environment.
+  #   template_name: "smd1_prod_config_template.py"   ← LCLS-I  / psana1
+  #   template_name: "smd2_prod_config_template.py"   ← LCLS-II / psana2
+  #   output_path:   full path where the rendered config will be written
+  # lute_template_cfg:
+  #   template_name: "smd2_prod_config_template.py"
+  #   output_path: "{{ work_dir }}/smalldata_tools/lcls2_producers/prod_config_mfx.py"
+
+  # ── Output / run control ──────────────────────────────────────────────────
   # Output directory for the smalldata HDF5 file.
   # Defaults to /sdf/data/lcls/ds/<hutch>/<exp>/hdf5/smalldata if not set.
   directory: ""
-
-  # Path to the smalldata_tools producer Python script.
-  # Auto-populated to the standard path under <exp>/results/smalldata_tools if left empty.
-  # producer:
 
   # DAQ run number. Auto-populated from the RUN_NUM environment variable if left empty.
   # run:
@@ -96,150 +112,148 @@ SubmitSMD:
   # Number of MPI processes. Auto-detected from SLURM_NPROCS - 1 if not set.
   # np:
 
-  # MPI executable path. Managed by LUTE internally.
-  # executable:
+  # ── Producer parameters ────────────────────────────────────────────────────
+  # All detector and algorithm configuration MUST be nested under
+  # producer_parameters: — do NOT put these at the top level of SubmitSMD.
+  # When provided, LUTE renders them into the producer config file via a Jinja2
+  # template (smd1_prod_config_template.py or smd2_prod_config_template.py).
+  # These fields are validated by the ProducerParameters Pydantic model.
+  producer_parameters:
 
-  # Internal template rendering config for the producer config file. Do not set unless overriding.
-  # lute_template_cfg:
+    # List of detector names to process (e.g. ["epix10k2M", "jungfrau"]). Optional.
+    # detnames:
 
-  # Optional producer parameters: define which detectors and algorithms to run.
-  # When provided, LUTE writes a producer config file from this block using a template.
-  # Comment out producer_parameters entirely to use the producer script's own config file.
-  # producer_parameters:
+    # List of detectors to exclude from psana loading. Optional.
+    # xdetectors:
 
-  #   # List of detector names to process (e.g. ["epix10k2M", "Rayonix"]). Optional.
-  #   detnames:
+    # List of integrating detectors to process. LCLS2 only. Optional.
+    # integrating_detectors:
 
-  #   # List of detectors to exclude from psana loading. Optional.
-  #   xdetectors:
+    # EPICS PVs to save once per event. List of PV names or (PV, alias) tuples. Optional.
+    # epicsPV:
 
-  #   # List of integrating detectors to process. LCLS2 only. Optional.
-  #   integrating_detectors:
+    # PVs to save shot-to-shot from the archiver. Optional.
+    # epicsArchFilePV:
 
-  #   # EPICS PVs to save once per event. List of PV names or (PV, alias) tuples. Optional.
-  #   epicsPV:
+    # PVs to save once per run. Optional.
+    # epicsOncePV:
 
-  #   # PVs to save shot-to-shot from the archiver. Optional.
-  #   epicsArchFilePV:
+    # Alternative timetool calibration parameters. Optional.
+    # ttCalib:
 
-  #   # PVs to save once per run. Optional.
-  #   epicsOncePV:
+    # Save analog inputs with custom names: [[input_channels], [names]]. Optional.
+    # aioParams:
 
-  #   # Alternative timetool calibration parameters. Optional.
-  #   ttCalib:
+    # Integrating detector configuration (LCLS2 only). Optional.
+    # get_intg:
+    #   intg_main: ""  # Slowest integrating detector passed to psana (Required if using get_intg).
+    #   intg_addl: []  # Additional integrating detectors with commensurate readout frequency.
 
-  #   # Save analog inputs with custom names: [[input_channels], [names]]. Optional.
-  #   aioParams:
+    # ROI extraction parameters, keyed by detector name. Optional.
+    # NOTE: ROI uses two bracket levels: [[row_start, row_end], [col_start, col_end]]
+    # getROIs:
+    #   <det_name>:
+    #     - ROI: [[row_start, row_end], [col_start, col_end]]  # ROI definition (can define multiple).
+    #       writeArea: false   # Save the full ROI image in addition to the sum. Default: false
+    #       thresADU: null     # ADU threshold to apply before summing. Optional.
+    #       calcPars: false    # Calculate additional ROI parameters. Default: false
 
-  #   # Integrating detector configuration (LCLS2 only). Optional.
-  #   get_intg:
-  #     intg_main: ""  # Slowest integrating detector passed to psana (Required if using get_intg).
-  #     intg_addl: []  # Additional integrating detectors with commensurate readout frequency.
+    # Azimuthal integration parameters, keyed by detector name. Optional.
+    # getAzIntParams:
+    #   <det_name>:
+    #     eBeam: ""          # Beam energy in keV. Required.
+    #     center: []         # Beam center in micrometers [x, y]. Required.
+    #     dis_to_sam: ""     # Detector distance in mm. Required.
+    #     tx: 0              # Tilt in x (degrees). Default: 0
+    #     ty: 0              # Tilt in y (degrees). Default: 0
+    #     ADU_per_Photon: 1.0  # ADU per photon conversion factor. Default: 1.0
+    #     phiBins: 1         # Number of phi (azimuthal) bins. Default: 1
+    #     qbin: 0.005        # Width of each Q bin. Default: 5e-3
+    #     thresRms: null     # Lower threshold in units of RMS. Optional.
+    #     thresADU: null     # Lower threshold in ADU. Optional.
+    #     thresADUhigh: null # Upper threshold in ADU. Optional.
+    #     geomCorr: true     # Apply geometric correction. Default: true
+    #     polCorr: true      # Apply polarization correction. Default: true
+    #     userMask: null     # Path to a .npy mask file. Optional.
 
-  #   # ROI extraction parameters, keyed by detector name. Optional.
-  #   getROIs:
-  #     <det_name>:
-  #       - ROI: [[[row_start, row_end], [col_start, col_end]]]  # ROI definition (can define multiple).
-  #         writeArea: false   # Save the full ROI image in addition to the sum. Default: false
-  #         thresADU: null     # ADU threshold to apply before summing. Optional.
-  #         calcPars: false    # Calculate additional ROI parameters. Default: false
+    # Azimuthal integration via PyFAI, keyed by detector name. Optional.
+    # getAzIntPyFAIParams:
+    #   <det_name>:
+    #     poni_file: null    # Path to a poni file. Provide poni_file OR ai_kwargs, not both.
+    #     ai_kwargs:         # PyFAI AzimuthalIntegrator kwargs (if not using poni_file).
+    #       dist: ""         # Detector distance in meters.
+    #       poni1: ""        # First poni in meters.
+    #       poni2: ""        # Second poni in meters.
+    #     npts: 512          # Number of Q bins. Default: 512
+    #     npts_az: 13        # Number of phi (azimuthal) bins. Default: 13
+    #                        # Use npts_az: 1 for isotropic SAXS (gives scalar I(Q) per shot).
+    #                        # Use npts_az > 1 for anisotropic scattering or azimuthal sectors.
+    #     int_units: "2th_deg"  # Integration units. Default: "2th_deg"
+    #                           # SAXS / WAXS: change to "q_A^-1" (Q in Å⁻¹) or "q_nm^-1".
+    #                           # Powder diffraction: keep "2th_deg".
+    #                           # The downstream SmallDataXSSAnalyzer expects Q-space units.
+    #     return2d: false    # Return the full 2D q/phi map. Default: false
 
-  #   # Azimuthal integration parameters, keyed by detector name. Optional.
-  #   getAzIntParams:
-  #     <det_name>:
-  #       eBeam: ""          # Beam energy in keV. Required.
-  #       center: []         # Beam center in micrometers [x, y]. Required.
-  #       dis_to_sam: ""     # Detector distance in mm. Required.
-  #       tx: 0              # Tilt in x (degrees). Default: 0
-  #       ty: 0              # Tilt in y (degrees). Default: 0
-  #       ADU_per_Photon: 1.0  # ADU per photon conversion factor. Default: 1.0
-  #       phiBins: 1         # Number of phi (azimuthal) bins. Default: 1
-  #       qbin: 0.005        # Width of each Q bin. Default: 5e-3
-  #       thresRms: null     # Lower threshold in units of RMS. Optional.
-  #       thresADU: null     # Lower threshold in ADU. Optional.
-  #       thresADUhigh: null # Upper threshold in ADU. Optional.
-  #       geomCorr: true     # Apply geometric correction. Default: true
-  #       polCorr: true      # Apply polarization correction. Default: true
-  #       userMask: null     # Path to a .npy mask file. Optional.
+    # Photon counting parameters, keyed by detector name. Optional.
+    # getPhotonParams:
+    #   <det_name>:
+    #     ADU_per_photon: 9.5  # Number of ADU per photon. Default: 9.5
+    #     thresADU: 0.8        # Threshold as a fraction of ADU_per_photon. Default: 0.8
 
-  #   # Azimuthal integration via PyFAI, keyed by detector name. Optional.
-  #   getAzIntPyFAIParams:
-  #     <det_name>:
-  #       poni_file: null    # Path to a poni file. Provide poni_file OR ai_kwargs, not both.
-  #       ai_kwargs:         # PyFAI AzimuthalIntegrator kwargs (if not using poni_file).
-  #         dist: ""         # Detector distance in meters.
-  #         poni1: ""        # First poni in meters.
-  #         poni2: ""        # Second poni in meters.
-  #       npts: 512          # Number of Q bins. Default: 512
-  #       npts_az: 13        # Number of phi (azimuthal) bins. Default: 13
-  #                          # Use npts_az: 1 for isotropic SAXS (gives scalar I(Q) per shot).
-  #                          # Use npts_az > 1 for anisotropic scattering or azimuthal sectors.
-  #       int_units: "2th_deg"  # Integration units. Default: "2th_deg"
-  #                             # SAXS / WAXS: change to "q_A^-1" (Q in Å⁻¹) or "q_nm^-1".
-  #                             # Powder diffraction: keep "2th_deg".
-  #                             # The downstream SmallDataXSSAnalyzer expects Q-space units.
-  #       return2d: false    # Return the full 2D q/phi map. Default: false
+    # Droplet finding parameters, keyed by detector name. Optional.
+    # getDropletParams:
+    #   <det_name>:
+    #     threshold: 5        # Threshold for pixel inclusion in a droplet (sigma or ADU). Default: 5
+    #     thresholdLow: 5     # Lower threshold to sharpen the droplet edge. Default: 5
+    #     thresADU: 60        # ADU threshold to reject small spurious droplets. Default: 60
+    #     useRms: true        # If true, threshold is in RMS units; otherwise ADU. Default: true
+    #     nData: 100000       # Maximum number of droplets to store per event. Optional.
+    #     relabel: true       # Re-label connected components after initial finding. Default: true
 
-  #   # Photon counting parameters, keyed by detector name. Optional.
-  #   getPhotonParams:
-  #     <det_name>:
-  #       ADU_per_photon: 9.5  # Number of ADU per photon. Default: 9.5
-  #       thresADU: 0.8        # Threshold as a fraction of ADU_per_photon. Default: 0.8
+    # Droplet-to-photon conversion parameters, keyed by detector name. Optional.
+    # getDroplet2Photons:
+    #   <det_name>:
+    #     droplet:
+    #       threshold: 5      # Droplet threshold (sigma or ADU). Default: 5
+    #       thresholdLow: 5   # Lower droplet threshold. Default: 5
+    #       thresADU: 60      # ADU threshold to reject small droplets. Default: 60
+    #       useRms: true      # Threshold in RMS units if true. Default: true
+    #     aduspphot: 162      # ADU per photon for conversion. Default: 162
+    #     cputime: true       # Log CPU time. Default: true
+    #     nData: 30000        # Maximum number of events to process. Default: 3e4
 
-  #   # Droplet finding parameters, keyed by detector name. Optional.
-  #   getDropletParams:
-  #     <det_name>:
-  #       threshold: 5        # Threshold for pixel inclusion in a droplet (sigma or ADU). Default: 5
-  #       thresholdLow: 5     # Lower threshold to sharpen the droplet edge. Default: 5
-  #       thresADU: 60        # ADU threshold to reject small spurious droplets. Default: 60
-  #       useRms: true        # If true, threshold is in RMS units; otherwise ADU. Default: true
-  #       nData: 100000       # Maximum number of droplets to store per event. Optional.
-  #       relabel: true       # Re-label connected components after initial finding. Default: true
+    # SVD waveform fitting parameters, keyed by detector name. Optional.
+    # getSvdParams:
+    #   <det_name>:
+    #     n_components: 2     # Number of SVD components to use (maximum 25). Default: 2
+    #     basis_file: null    # Path to a pre-computed SVD basis file. Optional.
+    #     n_pulse: 1          # Number of pulses to fit. Default: 1
+    #     delay: [0]          # Delay between pulses. Default: [0]
+    #     mode: "max"         # Amplitude calculation method: "max", "norm", or "both". Default: "max"
+    #     return_reconstructed: false  # Return the reconstructed waveforms. Default: false
 
-  #   # Droplet-to-photon conversion parameters, keyed by detector name. Optional.
-  #   getDroplet2Photons:
-  #     <det_name>:
-  #       droplet:
-  #         threshold: 5      # Droplet threshold (sigma or ADU). Default: 5
-  #         thresholdLow: 5   # Lower droplet threshold. Default: 5
-  #         thresADU: 60      # ADU threshold to reject small droplets. Default: 60
-  #         useRms: true      # Threshold in RMS units if true. Default: true
-  #       aduspphot: 162      # ADU per photon for conversion. Default: 162
-  #       cputime: true       # Log CPU time. Default: true
-  #       nData: 30000        # Maximum number of events to process. Default: 3e4
+    # Autocorrelation parameters, keyed by detector name. Optional.
+    # getAutocorrParams:
+    #   <det_name>:
+    #     threshADU: [-1e6, 1e6]  # Low and high pixel intensity thresholds. Default: [-1e6, 1e6]
+    #     mask: null              # Path to a mask file for non-rectangular ROIs. Optional.
+    #     save_lineout: false     # Save only lineouts instead of the full 2D autocorr image. Default: false
+    #     save_range: [50, 50]    # Size of the autocorr image to save [rows, cols]. Default: [50, 50]
+    #     illumination_correction: null  # Illumination correction arrays for each ROI. Optional.
 
-  #   # SVD waveform fitting parameters, keyed by detector name. Optional.
-  #   getSvdParams:
-  #     <det_name>:
-  #       n_components: 2     # Number of SVD components to use (maximum 25). Default: 2
-  #       basis_file: null    # Path to a pre-computed SVD basis file. Optional.
-  #       n_pulse: 1          # Number of pulses to fit. Default: 1
-  #       delay: [0]          # Delay between pulses. Default: [0]
-  #       mode: "max"         # Amplitude calculation method: "max", "norm", or "both". Default: "max"
-  #       return_reconstructed: false  # Return the reconstructed waveforms. Default: false
+    # Per-detector Pressio (SZ3) compression settings. Optional.
+    # getPressioCompression:
+    #   <det_name>:
+    #     compressor_id: "sz3"     # Compressor type. Currently only "sz3" is supported.
+    #     compressor_args:
+    #       abs_error_bound: 10    # Absolute error bound for compression. Default: 10
 
-  #   # Autocorrelation parameters, keyed by detector name. Optional.
-  #   getAutocorrParams:
-  #     <det_name>:
-  #       threshADU: [-1e6, 1e6]  # Low and high pixel intensity thresholds. Default: [-1e6, 1e6]
-  #       mask: null              # Path to a mask file for non-rectangular ROIs. Optional.
-  #       save_lineout: false     # Save only lineouts instead of the full 2D autocorr image. Default: false
-  #       save_range: [50, 50]    # Size of the autocorr image to save [rows, cols]. Default: [50, 50]
-  #       illumination_correction: null  # Illumination correction arrays for each ROI. Optional.
-
-  #   # Per-detector Pressio (SZ3) compression settings. Optional.
-  #   getPressioCompression:
-  #     <det_name>:
-  #       compressor_id: "sz3"     # Compressor type. Currently only "sz3" is supported.
-  #       compressor_args:
-  #         abs_error_bound: 10    # Absolute error bound for compression. Default: 10
-
-  #   # Detector sum algorithms, keyed by detector name or "all". Optional.
-  #   detSumAlgos:
-  #     all:
-  #       - "calib"
-  #       - "calib_dropped"
-  #       - "calib_dropped_square"
-  #     # <det_name>:
-  #     #   - "calib_thresADU5"
-  #     #   - "calib_max"
+    # Detector sum algorithms, keyed by detector name or "all". Optional.
+    # detSumAlgos:
+    #   all:
+    #     - "calib"
+    #     - "calib_dropped"
+    #     - "calib_dropped_square"
+    #   # <det_name>:
+    #   #   - "calib_thresADU5"
+    #   #   - "calib_max"

@@ -1,0 +1,98 @@
+%YAML 1.3
+# ============================================================
+# MFX Geometry Calibration — BayFAI (PyFAI Bayesian optimization)
+# Starting point only — verify every field with the user.
+#
+# This is a SEPARATE workflow from the main experiment.
+# Run it on a CALIBRANT run (AgBh or LaB₆ powder), not on sample data.
+# Trigger: MANUAL
+#
+# BayFAI outputs three geometry artifacts from a single calibrant run:
+#   .poni  (PyFAI geometry file)
+#          → SAXS: use as getAzIntPyFAIParams.poni_file
+#   .geom  (CrystFEL geometry file)
+#          → CrystFEL SFX: use directly as IndexCrystFEL.geometry and
+#            RunCheetah.crystallography.geometry_file — no conversion needed
+#   .data  (psana calibration geometry file)
+#          → CCTBX.XFEL SFX: deploy to psana calib database
+#            (ask instrument scientist for deploy command — e.g. calibcopy or calibman)
+#            CCTBX then loads calibration constants automatically via DataSource init;
+#            no explicit geometry field is needed in IndexCCTBXXFEL
+#
+# DAG for this workflow (MANUAL trigger):
+#   SmallDataProducer2  →  BayFAIOptimizer2
+# LCLS-I: use SmallDataProducer + BayFAIOptimizer instead
+# ============================================================
+---
+title: "MFX geometry calibration — BayFAI"     # optional description
+experiment: ""                                  # e.g. mfxl1013621 — VERIFY WITH USER
+run: ""                                         # calibrant run number — VERIFY WITH USER
+date: ""                                        # YYYY/MM/DD
+lute_version: 0.2.0
+task_timeout: 3600
+work_dir: ""                                    # e.g. /sdf/data/lcls/ds/mfx/<exp>/results/lute_output — VERIFY WITH USER
+---
+
+# ── Step 1: Accumulate calibrant frames via SmallData ─────────────────────────
+# detSumAlgos accumulates all frames in the run into a single image.
+# calib_max (per-pixel maximum) is preferred over calib (sum) for BayFAI —
+# AgBh rings stand out more clearly in a max-projection.
+SubmitSMD:
+  # Path to smalldata_tools producer script — VERIFY WITH USER
+  producer: "{{ work_dir }}/smalldata_tools/lcls2_producers/smd_producer.py"
+
+  # Always smd2 for MFX (LCLS-II since Jul 2025)
+  lute_template_cfg:
+    template_name: "smd2_prod_config_template.py"
+    output_path: "{{ work_dir }}/smalldata_tools/lcls2_producers/prod_config_mfx.py"
+
+  # SmallData output — same directory as the main experiment
+  directory: "{{work_dir}}/smd_output"   # default: /sdf/data/lcls/ds/mfx/<exp>/results/lute_output/smd_output
+  # to not overwrite main smalldata output
+
+  producer_parameters:
+    # Accumulate per-pixel maximum across all calibrant frames
+    detSumAlgos:
+      # Detector alias — VERIFY WITH USER via run.detnames
+      jungfrau:                                 # rename key to confirmed alias
+        - "calib_max"
+
+# ── Step 2: Bayesian geometry optimization ────────────────────────────────────
+# Reads the accumulated image from SubmitSMD and fits AgBh/LaB₆ ring positions
+# to optimize detector distance, beam center (poni1/poni2), and rotation.
+# Output: {work_dir}/bayFAI_output/{detname}.poni
+BayFAI:
+  # Detector psana alias — must match detSumAlgos key above — VERIFY WITH USER
+  detname: "jungfrau"                           # rename to confirmed alias
+
+  # Calibrant powder: "AgBh" (standard at MFX) or "LaB6" — VERIFY WITH USER
+  calibrant: "AgBh"
+
+  # Starting geometry for Bayesian search.
+  # dist: detector distance in meters; adjust to approximate known distance.
+  # poni1/poni2: beam center offsets from detector origin in meters (start at 0).
+  center:
+    dist: 0.1                                   # ~100 mm starting guess — VERIFY WITH USER (MFX: 80–200 mm typical)
+    poni1: 0.0                                  # adjust if beam center is far from origin
+    poni2: 0.0
+    rot1: 0.0
+    rot2: 0.0
+    rot3: 0.0
+
+  # Search bounds as ± offsets from center.
+  # Widen dist bounds if detector distance is very uncertain.
+  bounds:
+    dist: [-0.05, 0.05]                         # ±50 mm
+    poni1: [-0.005, 0.005]                        # ±50 mm
+    poni2: [-0.005, 0.005]                        # ±50 mm
+    rot1: [-0.1, 0.1]                           # ±~6°
+    rot2: [-0.1, 0.1]
+    rot3: [-0.1, 0.1]
+
+  bo_params:
+    # Number of initial random samples for Gaussian Process initialization
+    # n_samples: 20                             # default: 20; increase for wider search space
+    # Total Bayesian Optimization iterations
+    # n_iterations: 80                          # default: 80
+    # Number of AgBh rings to use
+    # max_rings: 6                              # default: 6; reduce if rings are faint
