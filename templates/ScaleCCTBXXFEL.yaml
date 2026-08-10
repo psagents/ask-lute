@@ -23,6 +23,10 @@ work_dir: ""
 #
 # Typical use: run CCTBXScaler first, inspect unit cell statistics, then run CCTBXMerger
 # in merge-only mode (set dispatch_step_list in MergeCCTBXXFEL accordingly).
+#
+# See references/cctbx-sfx-workflow.md for the required-info checklist (unit cell,
+# space group, reference model, real merging_d_min) and the PHIL blank-string
+# gotchas (scaling_model / output_prefix below) before filling this in.
 ScaleCCTBXXFEL:
 
   # Path to the CCTBX phil configuration file.
@@ -50,6 +54,11 @@ ScaleCCTBXXFEL:
     # Path(s) to the directory containing integrated experiment+reflection files
     # (*_integrated.expt / *_integrated.refl). Accepts a single path or a list
     # of paths for multi-run scaling. Required.
+    # NOT auto-resolved from IndexCCTBXXFEL's output via the LUTE database - there
+    # is no validator here that queries read_latest_db_entry. Set this explicitly
+    # to the same directory used as IndexCCTBXXFEL's phil_parameters.output_output_dir
+    # (a static {{ work_dir }}/... substitution is correct; this is not a case for
+    # task-result chaining).
     input_path: ""
     # Suffix for experiment files. Default: "_integrated.expt"
     # input_experiments_suffix:
@@ -108,8 +117,14 @@ ScaleCCTBXXFEL:
     # or "mark1" (no scaling / Monte Carlo averaging; requires scaling_unit_cell and
     # scaling_space_group).
     # scaling_algorithm:
-    # Path to a reference PDB or MTZ file for mark0 absolute scaling. Leave empty for
-    # internal KB/Wilson scaling. Default: ""
+    # Path to a reference PDB or MTZ file for mark0 absolute scaling. Ask the user
+    # if one exists for this experiment/sample - it improves scaling quality over
+    # internal KB/Wilson scaling.
+    # WARNING: the phil template renders "model = {{ scaling_model }}" unconditionally
+    # (no blank-safe guard). The field's default "" produces an invalid, blank PHIL
+    # value and crashes the parser: RuntimeError: Missing value for model. If you
+    # genuinely have no reference model, set this to the literal string "None"
+    # (not blank, not omitted) - never leave it as "".
     # scaling_model:
     # Unit cell for mark1 scaling (e.g. "78 78 39 90 90 90"). Required when
     # scaling_algorithm=mark1.
@@ -125,17 +140,27 @@ ScaleCCTBXXFEL:
     # High-resolution cutoff in Angstroms. Required — cctbx default is None and
     # xfel.merge uses it to define the resolution grid even in scaling-only mode.
     # The LUTE model carries a 3.0 safety default but that value is almost certainly
-    # not right for your data.
+    # not right for your data. Ask the user for a real value - do not invent a
+    # placeholder silently; if one must be used, tell the user explicitly and flag
+    # it for revisiting after inspecting first-pass indexing/scaling statistics.
     merging_d_min: ""
     # Merge Bijvoet (Friedel) pairs during scaling. Keep false for SAD/MAD experiments.
     # Default: false
     # merging_merge_anomalous:
 
     # --- Output ---
-    # Prefix for output file names (e.g. "scaling_r0036"). Default: ""
+    # Prefix for output file names (e.g. "scaling_r0036"). Default: "".
+    # WARNING: same blank-string-crashes-PHIL issue as scaling_model above - the
+    # template renders "prefix = {{ output_prefix }}" unconditionally, so leaving
+    # this "" crashes with RuntimeError: Missing value for prefix. The content is
+    # purely cosmetic (just prefixes output filenames) but it must be non-empty -
+    # always set this to some real string, never leave it blank.
     # output_prefix:
     # Directory for scaled output files. This path is stored in the LUTE database so
     # CCTBXMerger can auto-resolve input_path from it. Required.
+    # WARNING: cctbx.xfel.merge does NOT create this directory itself - every MPI
+    # rank writes here directly and crashes with FileNotFoundError if it's missing.
+    # The submission script must `mkdir -p` this path before launching.
     output_output_dir: ""
     # Save scaled experiment and reflection files. Must be true for the output to be
     # usable by a downstream CCTBXMerger task. Default: true

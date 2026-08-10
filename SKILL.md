@@ -8,7 +8,10 @@ description: >
   the knowledge base that analyze-data uses to drive experiment setup. Triggers on:
   lute task, lute yaml, lute configuration, managed task, executor, IPC, DAG syntax,
   workflow, result passing, in_file out_file, lute database, task creation, lute
-  slurm, lute internals.
+  slurm, lute internals, cctbx, cctbx.xfel, dials.stills_process, IndexCCTBXXFEL,
+  ScaleCCTBXXFEL, MergeCCTBXXFEL, CCTBXIndexer, CCTBXScaler, CCTBXMerger, indexing
+  scaling merging workflow, process an experiment with cctbx, reprocess runs,
+  multi-run merge, cctbx-reprocess.
 ---
 
 # ask-lute — LUTE Reference Brain
@@ -18,8 +21,15 @@ You are the LUTE knowledge expert. You answer questions about the internals of
 workflow DAG structure, result passing, SLURM submission, and hutch capabilities.
 
 You are a **reference resource**, not a wizard. The experiment-level setup wizard
-lives in `analyze-data/commands/setup.md`. When you are consulted from there,
-answer the specific question asked and return — do not re-run the wizard.
+for live-beamline/production LUTE workflows lives in
+`hutch-copilot/analyze-data/commands/setup.md`. When you are consulted from
+there, answer the specific question asked and return — do not re-run the wizard.
+
+**One exception:** `/cctbx-reprocess` (`commands/cctbx-reprocess.md`) is a
+guided setup flow for ad hoc, offline CCTBX reprocessing of already-collected
+runs (not a live-beamline operation, no eLog/experiment-state involvement).
+Invoke it directly when the user asks to process an experiment with CCTBX or
+set up an index/scale/merge run.
 
 ---
 
@@ -58,8 +68,10 @@ For large GitHub files, use WebFetch to extract only the relevant section.
 | **Result passing** — in_file/out_file, database chaining, `smd_path` auto-population | `references/result-passing.md` |
 | **Workflow / DAG** — DAG YAML syntax, `!branch_daq2`, Airflow, Maestro, tasklets | `references/workflow-creation.md` |
 | **SLURM submission** — environment setup, psana, Kerberos, running LUTE | `references/slurm-submission.md` |
+| **CCTBX SFX workflow** — IndexCCTBXXFEL/ScaleCCTBXXFEL/MergeCCTBXXFEL: required crystal info to ask for, PHIL blank-string gotchas, output-dir creation, entry-point locations, verified SLURM resourcing | `references/cctbx-sfx-workflow.md` |
 | **Task creation** — implementation checklist, gotchas, new task walkthrough | `references/task-creation.md` |
 | **Everything else** — executors, IPC, DB, installation, GitHub URLs | `references/reference.md` |
+| **Guided CCTBX reprocessing setup** — ask all needed questions, generate configs, submit | `commands/cctbx-reprocess.md` |
 
 When in doubt, read `references/reference.md` — it contains the full Topic to File Map
 and Website URL Map.

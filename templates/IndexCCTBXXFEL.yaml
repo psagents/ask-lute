@@ -18,6 +18,16 @@ work_dir: ""
 # ManagedTask: CCTBXIndexer (Executor)
 # Runs cctbx.xfel (DIALS stills_process) for crystallographic indexing of LCLS data.
 # Uses the CCP4 CCTBX environment sourced at LCLS.
+#
+# Part of a 3-stage chain: IndexCCTBXXFEL -> ScaleCCTBXXFEL -> MergeCCTBXXFEL.
+# Before filling this in, read references/cctbx-sfx-workflow.md and ask the user
+# for: space group, unit cell, a reference/refined detector geometry (if one
+# exists for this experiment), and the detector alias (confirm against
+# run.detnames, don't guess from the hutch table). Indexing without known
+# symmetry (P1) is a valid deliberate choice, but it searches far more candidate
+# lattices per image and uses substantially more memory per MPI rank than
+# known-symmetry indexing - say so explicitly if defaulting to P1, it changes
+# the SLURM resourcing needed as well as the indexing quality.
 IndexCCTBXXFEL:
 
   # LCLS data specification for psana access.
@@ -30,12 +40,25 @@ IndexCCTBXXFEL:
     run: "{{ run }}"
     # Psana detector address (e.g. "Rayonix", "epix10k2M"). Required.
     detector_address: ""
-    # Wavelength correction offset in eV. Optional.
+    # Fixed correction to the nominal beamline wavelength. Optional, independent
+    # of input_reference_geometry below (that overrides detector position only,
+    # not wavelength). Usually constant across all runs of one experiment - check
+    # a prior direct cctbx.xfel.process config for this experiment if one exists.
     # wavelength_offset:
-    # Energy calibration: eV per pixel for the spectrum detector. Optional.
+    # Single-shot photon energy calibration (from xfel.fee_calibration, fit from
+    # FEE spectrometer notch scans): eV = spectrum_eV_offset + pixel_centroid *
+    # spectrum_eV_per_pixel, applied per-event. Optional - omitting these falls
+    # back to one fixed wavelength for every shot in the run instead of a true
+    # per-shot value (a precision refinement, not required for valid indexing).
+    # Always supplied as a matched pair. Consult ask-cctbx-xfel for details.
     # spectrum_eV_per_pixel:
-    # Energy calibration: eV offset for the spectrum detector. Optional.
     # spectrum_eV_offset:
+    # Raw detector-to-sample distance (mm) for the format reader, e.g.
+    # "jungfrau.detz_offset" or "<detector>.detz_offset". Irrelevant/redundant if
+    # phil_parameters.input_reference_geometry below is set (that replaces the
+    # whole detector model); essential if it is not. data_spec is an open dict -
+    # any locator key the psana2 format reader accepts can be added here.
+    # <detector>.detz_offset:
 
   # Path to the input data location file (written from data_spec if provided).
   # Auto-populated to work_dir/data_<exp>_<run>.loc if left empty.
@@ -52,6 +75,10 @@ IndexCCTBXXFEL:
 
     # --- Output ---
     # Directory where output files will be placed. Auto-populated from LUTE_WORK_DIR if empty.
+    # WARNING: dials.stills_process does NOT create this directory itself - every
+    # MPI rank opens a per-rank log file directly inside it and crashes with
+    # FileNotFoundError if it's missing. The submission script must `mkdir -p`
+    # this path (and the matching Scale/Merge output dirs) before launching.
     # output_output_dir:
     # Save one combined experiment/reflection file per process. Default: true
     # output_composite_output:
@@ -68,6 +95,14 @@ IndexCCTBXXFEL:
     # dispatch_refine:
     # Integrate indexed images. Default: true
     # dispatch_integrate:
+    # Skip images below a minimum strong-spot count before indexing is attempted.
+    # Optional, all three omitted from the rendered phil unless set (falls back to
+    # dials.stills_process's own default of enable=true, minimum=16). A minimum of
+    # 40 is a commonly-used team convention seen across many production runs on
+    # one experiment - check for an existing convention before defaulting to 16.
+    # dispatch_hit_finder_enable:
+    # dispatch_hit_finder_minimum_number_of_reflections:
+    # dispatch_hit_finder_maximum_number_of_reflections:
 
     # --- Parallelization ---
     # Multiprocessing method: "mpi", "multiprocessing", "sge", "lsf", "pbs". Default: "mpi"
@@ -88,8 +123,19 @@ IndexCCTBXXFEL:
     # spotfinder_threshold_dispersion_kernel_size:
     # Minimum contiguous pixels required for a spot to pass the filter. Default: 3
     # spotfinder_filter_min_spot_size:
+    # Maximum contiguous pixels for a spot to pass the filter. Optional, omitted
+    # from the rendered phil unless set.
+    # spotfinder_filter_max_spot_size:
     # High-resolution cutoff in Angstroms for spot filtering. Optional.
     # spotfinder_filter_d_min:
+    # Spotfinding threshold algorithm: "dispersion", "dispersion_extended", or
+    # "radial_profile". Optional - if unset, LUTE never emits an algorithm= line
+    # at all, so dials.stills_process silently falls back to its own compiled-in
+    # default (dispersion_extended), which is more conservative near already-
+    # detected strong pixels and can find fewer spots than plain "dispersion" -
+    # with nothing indicating the choice was never actually applied. See
+    # references/cctbx-sfx-workflow.md §8 before assuming defaults are fine.
+    # spotfinder_threshold_algorithm:
 
     # --- Indexing ---
     # Refine indexing candidates in the target symmetry (not P1). Default: false
@@ -104,8 +150,39 @@ IndexCCTBXXFEL:
     # input_reference_geometry:
     # Panel origin override [x, y, z] in mm. Requires fast_axis and slow_axis. Optional.
     # geometry_detector_panel_origin:
+    # Resolution (d_min) for the initial, low-resolution indexing refinement
+    # macrocycle, before subsequent cycles step down toward the full resolution
+    # limit - distinct from spotfinder_filter_d_min above. Optional.
+    # indexing_refinement_protocol_d_min_start:
+    # Maximum number of candidate lattices to search per still image, enabling
+    # multi-lattice indexing. Optional, omitted from the rendered phil unless set.
+    # indexing_multiple_lattice_search_max_lattices:
+
+    # --- Radial average ---
+    # Calculate a radial average of each image — used e.g. to check detector
+    # distance calibration against known powder ring positions. All fields
+    # optional, omitted from the rendered phil unless explicitly set.
+    # radial_average_enable:
+    # Low two-theta bound (degrees) for the radial average range.
+    # radial_average_two_theta_low:
+    # High two-theta bound (degrees) for the radial average range.
+    # radial_average_two_theta_high:
+    # Verbose output for the radial average calculation. Default: false
+    # radial_average_verbose:
+    # Output the radial average bins. Default: false
+    # radial_average_output_bins:
+    # Show plots of the radial average. Default: false
+    # radial_average_show_plots:
+    # Path to a mask file used when calculating the radial average. Optional,
+    # can reuse spotfinder_lookup_mask / integration_lookup_mask.
+    # radial_average_mask:
 
     # --- Integration ---
+    # Path to a bad pixel mask file for the integration step, separate from
+    # spotfinder_lookup_mask above (spotfinding and integration are masked
+    # independently - a mask set only on spotfinder_lookup_mask does NOT also
+    # apply during integration). Optional.
+    # integration_lookup_mask:
     # Sigma threshold for outlier rejection in background plane fitting. Default: 10
     # integration_background_simple_outlier_plane_n_sigma:
     # Detector gain multiplier for variances after integration of still images. Default: 1.0

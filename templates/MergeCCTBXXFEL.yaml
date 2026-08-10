@@ -25,6 +25,9 @@ work_dir: ""
 #   2. Merge-only (after a separate CCTBXScaler run): set dispatch_step_list to the
 #      merge-only step list shown in the dispatch section below.
 #      input_path will be auto-resolved from the ScaleCCTBXXFEL DB entry if left empty.
+#
+# See references/cctbx-sfx-workflow.md for the required-info checklist and the
+# PHIL blank-string gotchas (scaling_model / output_prefix below).
 MergeCCTBXXFEL:
 
   # Path to the CCTBX phil configuration file.
@@ -110,8 +113,14 @@ MergeCCTBXXFEL:
     # or "mark1" (no scaling / Monte Carlo averaging; requires scaling_unit_cell and
     # scaling_space_group).
     # scaling_algorithm:
-    # Path to a reference PDB or MTZ file for mark0 absolute scaling. Leave empty for
-    # internal KB/Wilson scaling. Default: ""
+    # Path to a reference PDB or MTZ file for mark0 absolute scaling. Ask the user
+    # if one exists for this experiment/sample. Keep in sync with ScaleCCTBXXFEL's
+    # scaling_model if that task ran first.
+    # WARNING: the phil template renders "model = {{ scaling_model }}" unconditionally
+    # (no blank-safe guard) - this default dispatch_step_list includes model_scaling,
+    # so this field is always used even in merge-only mode. Leaving it "" crashes:
+    # RuntimeError: Missing value for model. If there is genuinely no reference
+    # model, set this to the literal string "None" (not blank, not omitted).
     # scaling_model:
     # Unit cell for mark1 scaling (e.g. "78 78 39 90 90 90"). Required when
     # scaling_algorithm=mark1.
@@ -136,7 +145,8 @@ MergeCCTBXXFEL:
     # --- Merging ---
     # High-resolution cutoff in Angstroms. Required — cctbx default is None and the
     # merge will produce empty output without it. The LUTE model carries a 3.0 safety
-    # default but that value is almost certainly not right for your data.
+    # default but that value is almost certainly not right for your data. Ask the
+    # user for a real value; keep in sync with ScaleCCTBXXFEL.merging_d_min.
     merging_d_min: ""
     # Low-resolution cutoff in Angstroms. None = no low-resolution cutoff. Default: None
     # merging_d_max:
@@ -167,9 +177,15 @@ MergeCCTBXXFEL:
     # statistics_cciso_mtz_column_F:
 
     # --- Output ---
-    # Prefix for all output file names (e.g. "myexp_r0042"). Default: ""
+    # Prefix for all output file names (e.g. "myexp_r0042"). Default: "".
+    # WARNING: same blank-string-crashes-PHIL issue as scaling_model above - the
+    # template renders "prefix = {{ output_prefix }}" unconditionally. Must be a
+    # real non-empty string (content is cosmetic only); never leave it "".
     # output_prefix:
-    # Directory where output MTZ and log files are written. Default: ""
+    # Directory where output MTZ and log files are written. Default: "".
+    # WARNING: cctbx.xfel.merge does NOT create this directory itself - every MPI
+    # rank writes here directly and crashes with FileNotFoundError if it's missing.
+    # The submission script must `mkdir -p` this path before launching.
     # output_output_dir:
     # Temporary file directory. Defaults to output_output_dir. Default: ""
     # output_tmp_dir:
