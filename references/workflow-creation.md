@@ -1,6 +1,6 @@
 # Workflow Creation
 
-**Sections:** [Task vs Managed Task Names](#critical-understanding-task-names-vs-managed-task-names) · [Common Managed Tasks](#common-lute-managed-tasks) · [Result Passing](#critical-result-passing-between-tasks) · [Workflow Checklist](#workflow-creation-checklist) · [Adding a Task](#adding-a-task-to-an-existing-workflow) · [SLURM Submission](#slurm-submission) · [Tasklets](#tasklets)
+**Sections:** [Task vs Managed Task Names](#critical-understanding-task-names-vs-managed-task-names) · [Common Managed Tasks](#common-lute-managed-tasks) · [Result Passing](#critical-result-passing-between-tasks) · [DAG Branching](#dag-branching) · [Workflow Checklist](#workflow-creation-checklist) · [Adding a Task](#adding-a-task-to-an-existing-workflow) · [SLURM Submission](#slurm-submission) · [Tasklets](#tasklets)
 
 ---
 
@@ -11,12 +11,14 @@
 - **Launch helpers** (Airflow/Maestro submission): `lute/execution/launch.py`
 - **Managed task catalog** (tasks available to wire into workflows): `lute/managed_tasks.py`
 - **Tasklets** (lightweight pre/post hooks attached to Executors): `lute/tasks/tasklets.py`
+- **DAG parser** (incl. `!branch_daq2` and `!run_type` branching logic): `lute/io/config.py`
 
 ## Key website URLs
 
-- Creating a new workflow (overview): `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows/`
-- Airflow workflows: `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows_airflow/`
-- Maestro workflows: `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows_maestro/`
+- Creating a new workflow (overview): `https://slac-lcls.github.io/lute/v0.3.0/development/creating_workflows/`
+- Airflow workflows: `https://slac-lcls.github.io/lute/v0.3.0/development/creating_workflows_airflow/`
+- Maestro workflows: `https://slac-lcls.github.io/lute/v0.3.0/development/creating_workflows_maestro/`
+- Dynamic run-time workflows (run_type branching): `https://slac-lcls.github.io/lute/v0.3.0/development/dynamic_workflows/`
 
 ---
 
@@ -110,7 +112,14 @@ When creating workflows, **always verify names in `managed_tasks.py`**, but here
 | `PartialatorMerger` | `MergePartialator` | CrystFEL merging |
 | `HKLComparer` | `CompareHKL` | Merge statistics |
 | `CCTBXIndexer` | `IndexCCTBXXFEL` | CCTBX indexing |
-| `SmallDataProducer` | `SubmitSMD` | LCLS smalldata production |
+| `CCTBXScaler` | `ScaleCCTBXXFEL` | CCTBX scaling-only step (new in v0.3.0) |
+| `CCTBXMerger` | `MergeCCTBXXFEL` | CCTBX merging |
+| `SmallDataProducer` | `SubmitSMD` | LCLS-I smalldata production |
+| `SmallDataProducer2` | `SubmitSMD` | LCLS-II smalldata production (psana2) |
+| `BayFAIOptimizer` | `OptimizeBayFAI` | BayFAI geometry optimization (psana1) |
+| `BayFAIOptimizer2` | `OptimizeBayFAI` | BayFAI geometry optimization (psana2) |
+| `Xtc1Reader` | `ReadXtc1` | XTC1→XTC2 conversion reader (new in v0.3.0) |
+| `Xtc2Writer` | `WriteXtc2` | XTC1→XTC2 conversion writer (new in v0.3.0) |
 
 **This table is for reference only. Always fetch the current `managed_tasks.py` to get up-to-date names.**
 
@@ -158,6 +167,123 @@ IndexCrystFEL:
 - You end up with `in_file: ""` (empty string)
 
 **For complete details, see:** [references/result-passing.md](references/result-passing.md)
+
+---
+
+## DAG Branching
+
+LUTE supports two kinds of run-time branching inside a single workflow DAG.
+Both are triggered by special YAML tags in the DAG file.
+
+### Type 1 — `!branch_<key>` (DAQ generation / arbitrary condition)
+
+The `!branch_<key>` YAML tag splits the DAG based on a key that is resolved at
+launch time (typically `daq2` vs `daq1`, determined by whether `.xtc2` or `.xtc` files
+are present). **Only the matching branch runs.** This branching is mutually exclusive.
+
+```yaml
+!LUTE_DAG
+- !branch_daq2
+  daq2:
+    task_name: SmallDataProducer2
+    slurm_params: "--nodes=2 --ntasks-per-node=50 --partition=milano --account=lcls:..."
+    next: []
+  daq1:
+    task_name: SmallDataProducer
+    slurm_params: "--nodes=2 --ntasks-per-node=50 --partition=milano --account=lcls:..."
+    next: []
+```
+
+### Type 2 — `!run_type` (new in v0.3.0)
+
+The `!run_type` tag branches based on the `run_type` field read from the eLog for the
+current run. This is **additive** — all matching branches run in parallel.
+
+**Match rules:**
+- **Exact match**: key `DATA` runs only when `run_type == "DATA"`
+- **Negative match**: key `NOT_DARK` runs whenever `run_type != "DARK"`
+- **No match**: the `!run_type` node is skipped (nothing downstream runs from it)
+- An unknown key that never exactly matches is still tested for `NOT_*` negative patterns
+
+**CLI override (for testing):**
+```bash
+submit_launch_slurm.sh launch_slurm -c config.yaml -W workflow.dag \
+  --type GEOM -e mfx100852324 -r 298 --partition=milano --account=lcls:...
+```
+Pass `--type <VALUE>` to override the eLog `run_type` without writing to the log.
+
+**Full example — combining `!branch_daq2` and `!run_type`:**
+
+```yaml
+!LUTE_DAG
+- !branch_daq2
+  daq2:
+    task_name: SmallDataProducer2
+    slurm_params: "--nodes=2 --ntasks-per-node=50 --partition=milano --account=lcls:..."
+    next:
+      - !run_type
+        DATA:
+          task_name: SmallDataXSSAnalyzer
+          slurm_params: "--partition=milano --account=lcls:..."
+          next: []
+        GEOM:
+          task_name: BayFAIOptimizer2
+          slurm_params: "--nodes=2 --ntasks-per-node=50 --partition=milano --account=lcls:..."
+          next: []
+        NOT_DARK:
+          task_name: SmallDataXESAnalyzer
+          slurm_params: "--partition=milano --account=lcls:..."
+          next: []
+  daq1:
+    task_name: SmallDataProducer
+    slurm_params: "--nodes=2 --ntasks-per-node=50 --partition=milano --account=lcls:..."
+    next:
+      - !run_type
+        DATA:
+          task_name: SmallDataXSSAnalyzer
+          slurm_params: "--partition=milano --account=lcls:..."
+          next: []
+        GEOM:
+          task_name: BayFAIOptimizer
+          slurm_params: "--nodes=2 --ntasks-per-node=50 --partition=milano --account=lcls:..."
+          next: []
+        NOT_DARK:
+          task_name: SmallDataXESAnalyzer
+          slurm_params: "--partition=milano --account=lcls:..."
+          next: []
+```
+
+**Behaviour table for the `!run_type` block above:**
+
+| `run_type` value | GEOM branch | DATA branch | NOT_DARK branch |
+|---|---|---|---|
+| `GEOM` | runs | skipped | runs (not DARK) |
+| `DATA` | skipped | runs | runs (not DARK) |
+| `DARK` | skipped | skipped | skipped |
+| `FAKE` (unknown) | skipped | skipped | runs (not DARK) |
+
+> Source: PR #134. Implementation: `lute/io/config.py` (parser logic).
+> Full docs: `https://slac-lcls.github.io/lute/v0.3.0/development/dynamic_workflows/`
+
+---
+
+## Parallel tasks in a DAG
+
+The `next` field is a list — all tasks in the list are submitted in parallel.
+This also applies when two tasks must run simultaneously (e.g., XTC1→XTC2 conversion):
+
+```yaml
+!LUTE_DAG
+- task_name: "Xtc1Reader"
+  slurm_params: "--nodes=1 --tasks-per-node=11 --partition=milano --account=lcls:<EXP>"
+  next: []
+- task_name: "Xtc2Writer"
+  slurm_params: "--nodes=1 --tasks-per-node=11 --partition=milano --account=lcls:<EXP>"
+  next: []
+```
+
+> **XTC1→XTC2 note:** `Xtc1Reader` and `Xtc2Writer` **must** have identical `ntasks-per-node`.
+> They coordinate peer-to-peer via ZMQ — see `references/reference.md` for the XTC conversion doc URL.
 
 ---
 
@@ -237,6 +363,7 @@ venv and must be injected from the LCLS conda stacks.
 | `AgBhGeometryOptimizer` | `conda1/manage/bin/psconda.sh` | LCLS-I (psana1, Python 3.9) |
 | `BayFAIOptimizer` | `conda1/manage/bin/psconda.sh` | LCLS-I (psana1, Python 3.9) |
 | `PeakFinderPsocake` | `conda1/manage/bin/psconda.sh` | LCLS-I (deprecated, psana1) |
+| `Xtc1Reader` | `conda1/manage/bin/psconda.sh` | LCLS-I (psana1, Python 3.9) |
 | All other managed tasks | `conda2/manage/bin/psconda.sh` | LCLS-II (psana2, Python 3.9) |
 
 **Why this matters for workflow creation:**

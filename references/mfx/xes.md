@@ -88,6 +88,21 @@ get_intg:
 
 ---
 
+## DAG Template
+
+**File:** `templates/mfx/xes.dag`
+
+| `run_type` | Tasks that run |
+|---|---|
+| `DARK` | SmallDataProducer2 only |
+| `GEOM` | SmallDataProducer2 only (no XES analysis — calibrant runs have no spectral signal) |
+| `DATA` | SmallDataProducer2 → SmallDataXESAnalyzer |
+
+> **Combined XES + SAXS:** If both an XES spectrometer and a scattering detector are
+> active simultaneously, use `templates/mfx/smd.dag` instead.
+
+---
+
 ## Common Failure Modes
 
 | Symptom | Most likely cause | Fix |

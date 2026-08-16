@@ -212,6 +212,7 @@ These tasks have validators that auto-retrieve previous results:
 | `CompareHKL` | `MergePartialator` | `out_file` |
 | `AnalyzeSmallDataXSS` | `SubmitSMD` | `result.payload` |
 | `AnalyzeSmallDataXAS` | `SubmitSMD` | `result.payload` |
+| `MergeCCTBXXFEL` | `ScaleCCTBXXFEL` | `result.payload` (output directory) |
 
 **To verify if a task has auto-retrieval:**
 ```bash
@@ -397,8 +398,8 @@ def read_latest_db_entry(
 
 ## Further Reading
 
-- **Database v2 API**: `https://slac-lcls.github.io/lute/v0.2.0/design/database_v2/`
-- **YAML Configuration**: `https://slac-lcls.github.io/lute/v0.2.0/usage/configuration/`
+- **Database v2 API**: `https://slac-lcls.github.io/lute/v0.3.0/design/database_v2/`
+- **YAML Configuration**: `https://slac-lcls.github.io/lute/v0.3.0/usage/configuration/`
 - **Source code**: `lute/io/_db/v2/api.py` - `read_latest_db_entry` function
 - **Validators**: `lute/io/models/validators.py` - common validator patterns
 - **Task models**: `lute/io/models/sfx_*.py` - SFX task parameter validators

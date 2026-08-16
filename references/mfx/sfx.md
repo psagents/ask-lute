@@ -76,6 +76,29 @@ Main SFX run (END_OF_RUN):
 If the user chooses CCTBX.XFEL instead of CrystFEL, delegate to `@ask-cctbx-xfel`
 for the indexing and merging parameters before filling those blocks.
 
+### CCTBX.XFEL pipeline — Scale/Merge split (new in v0.3.0)
+
+As of v0.3.0 the CCTBX pipeline has an explicit **Scale → Merge** split:
+
+```
+IndexCCTBXXFEL (CCTBXIndexer)    → integrated .expt/.refl per MPI chunk
+       ↓
+ScaleCCTBXXFEL (CCTBXScaler)     → scaling-only (no final merge)
+       ↓                             output directory stored in LUTE DB
+MergeCCTBXXFEL (CCTBXMerger)     → merge-only; auto-resolves input_path from DB
+```
+
+- `CCTBXScaler` runs `cctbx.xfel.merge` with `dispatch_step_list` stopping before
+  the merge step. The scaled `.expt/.refl` output directory is stored in the LUTE
+  database so `CCTBXMerger` can auto-resolve `input_path` without explicit paths.
+- Template: `templates/ScaleCCTBXXFEL.yaml`
+- To run **scale + merge** in two separate SLURM jobs, use `CCTBXScaler` first, inspect
+  unit cell statistics, then trigger `CCTBXMerger`.
+
+**New `IndexCCTBXXFEL` field (v0.3.0):**
+- `output_logging_option: "suppressed"` (default) — silences per-image log spam in MPI
+  jobs. Change to `"normal"` when debugging indexing failures.
+
 ---
 
 ## Fields to Verify with the User
@@ -130,6 +153,45 @@ for the indexing and merging parameters before filling those blocks.
 | High R-split (> 30%) | Wrong symmetry or too few patterns | Confirm space group with user |
 | Empty stream file | Cheetah not finding hits | Lower `adc_threshold` and `minimum_snr` |
 | Missing detector in output | Alias mismatch | Re-run `run.detnames` on a fresh run |
+
+---
+
+## DAG Templates
+
+Two combined DAG templates are available — choose based on the indexing software.
+
+### CrystFEL pipeline — `templates/mfx/sfx_crystfel.dag`
+
+| `run_type` | Tasks that run |
+|---|---|
+| `DARK` | SmallDataProducer2 only |
+| `GEOM` | SmallDataProducer2 → BayFAIOptimizer2 |
+| `DATA` | SmallDataProducer2 → CheetahRunner → CrystFELIndexer → StreamFileConcatenator → PartialatorMerger → HKLComparer |
+
+### CCTBX.XFEL pipeline — `templates/mfx/sfx_cctbx.dag`
+
+| `run_type` | Tasks that run |
+|---|---|
+| `DARK` | SmallDataProducer2 only |
+| `GEOM` | SmallDataProducer2 → BayFAIOptimizer2 |
+| `DATA` | SmallDataProducer2 → CCTBXIndexer → CCTBXScaler → CCTBXMerger |
+
+> For CCTBX parameters consult `@ask-cctbx-xfel`.
+> CCTBXScaler (new in v0.3.0) runs a scaling-only pass; CCTBXMerger auto-resolves
+> its `input_path` from the LUTE database — no explicit path needed in the YAML.
+
+### GEOM run requirement (both DAGs)
+
+The `SubmitSMD` YAML block must include `detSumAlgos` with `calib_max` so BayFAI
+receives an accumulated calibrant image. Add to your YAML config:
+
+```yaml
+SubmitSMD:
+  producer_parameters:
+    detSumAlgos:
+      jungfrau:      # VERIFY ALIAS via run.detnames
+        - "calib_max"
+```
 
 ---
 

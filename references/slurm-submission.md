@@ -10,9 +10,9 @@
 
 ## Key website URLs
 
-- Installing LUTE: `https://slac-lcls.github.io/lute/v0.2.0/usage/installation/`
-- Running LUTE / SLURM submission: `https://slac-lcls.github.io/lute/v0.2.0/usage/running_lute/`
-- Quick start: `https://slac-lcls.github.io/lute/v0.2.0/quick_start/`
+- Installing LUTE: `https://slac-lcls.github.io/lute/v0.3.0/usage/installation/`
+- Running LUTE / SLURM submission: `https://slac-lcls.github.io/lute/v0.3.0/usage/running_lute/`
+- Quick start: `https://slac-lcls.github.io/lute/v0.3.0/quick_start/`
 
 ---
 

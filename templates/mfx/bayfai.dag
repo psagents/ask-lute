@@ -1,0 +1,25 @@
+!LUTE_DAG
+# MFX geometry calibration — BayFAI standalone workflow.
+# Register this as a MANUAL eLog workflow; run it on a calibrant run (AgBh or LaB6).
+# No run_type branching needed — this DAG is always triggered manually.
+#
+# LCLS-II (daq2): SmallDataProducer2 → BayFAIOptimizer2
+# LCLS-I  (daq1): SmallDataProducer  → BayFAIOptimizer
+#
+# slurm_params: fill in --partition and --account before deploying.
+# Example: "--nodes=4 --ntasks-per-node=50 --partition=milano --account=lcls:<EXP>"
+- !branch_daq2
+  daq2:
+    task_name: "SmallDataProducer2"
+    slurm_params: ""
+    next:
+    - task_name: "BayFAIOptimizer2"
+      slurm_params: ""
+      next: []
+  daq1:
+    task_name: "SmallDataProducer"
+    slurm_params: ""
+    next:
+    - task_name: "BayFAIOptimizer"
+      slurm_params: ""
+      next: []

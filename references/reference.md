@@ -28,7 +28,8 @@
 - **SFX indexing**: `lute/tasks/sfx_index.py`
 - **BayFAI**: `lute/tasks/bayfai.py`
 - **Geometry**: `lute/tasks/geometry.py`
-- **XTC conversion**: `lute/tasks/xtc.py`
+- **XTC conversion** (ReadXtc1 / WriteXtc2 parallel tasks — replaces old ConvertXtc1to2): `lute/tasks/xtc.py`
+- **SFX scaling** (ScaleCCTBXXFEL — new in v0.3.0): `lute/io/models/sfx_merge.py`
 - **Math utilities**: `lute/tasks/math.py`
 - **Test tasks**: `lute/tasks/test.py`
 - **MPI test tasks**: `lute/tasks/mpi_test.py`
@@ -47,7 +48,7 @@
 - **Full catalog**: `lute/managed_tasks.py`
 
 ### Configuration & Parameters
-- **YAML parsing**: `lute/io/config.py`
+- **YAML parsing** (incl. `!branch_daq2` and `!run_type` branching logic): `lute/io/config.py`
 - **Parameter utilities**: `lute/io/parameters.py`
 - **Base TaskParameters class**: `lute/io/models/base.py`
 - **Shared validators**: `lute/io/models/validators.py`
@@ -59,6 +60,12 @@
 - **eLog posting**: `lute/io/elog.py` (~18 KB)
 - **Calibration I/O**: `lute/io/calib.py`
 - **Custom exceptions**: `lute/io/exceptions.py`
+
+### Task Versioning (new in v0.3.0)
+- **Version utilities** (VersionSpecifier enum, git hash/diff, encode/decode): `lute/io/version_utils.py`
+- **DB version tables**: see `lute/io/_db/v2/api.py`
+- **`lute_cfg` utility** (reconstruct YAML from DB, restore repos): `utilities/lute_cfg/`
+- For full documentation see `references/lute-versioning.md`
 
 ### Workflows & Orchestration
 - **Workflow DAG definitions**: `workflows/` directory
@@ -73,33 +80,38 @@
 
 > **Package name:** The pip-installable package is `lute-lcls` (not `lute`).
 > Install with: `pip install lute-lcls`
+> Nightly builds: `pip install lute-lcls --extra-index-url https://slac-lcls.github.io/lute/wheels --pre`
 
 ---
 
 ## Website URL Map
 
-Base: `https://slac-lcls.github.io/lute/v0.2.0`
+Base: `https://slac-lcls.github.io/lute/v0.3.0`
 
 | Topic | URL |
 |---|---|
-| Home / overview | `https://slac-lcls.github.io/lute/v0.2.0` |
-| Quick start | `https://slac-lcls.github.io/lute/v0.2.0/quick_start/` |
-| Task configuration (YAML) | `https://slac-lcls.github.io/lute/v0.2.0/usage/configuration/` |
-| Installing LUTE | `https://slac-lcls.github.io/lute/v0.2.0/usage/installation/` |
-| Running LUTE | `https://slac-lcls.github.io/lute/v0.2.0/usage/running_lute/` |
-| Complete simple example | `https://slac-lcls.github.io/lute/v0.2.0/usage/complete_example/` |
-| Creating a new Task (overview) | `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/overview/` |
-| Creating a first-party Task | `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/first_party/` |
-| Creating a third-party Task | `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/third_party/` |
-| Creating a new workflow | `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows/` |
-| Airflow workflows | `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows_airflow/` |
-| Maestro workflows | `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows_maestro/` |
-| Database spec v2 | `https://slac-lcls.github.io/lute/v0.2.0/design/database_v2/` |
-| Database spec v1 | `https://slac-lcls.github.io/lute/v0.2.0/design/database_v1/` |
-| Source: managed_tasks | `https://slac-lcls.github.io/lute/v0.2.0/source/managed_tasks/` |
-| Source: executor | `https://slac-lcls.github.io/lute/v0.2.0/source/execution/executor/` |
-| Source: ipc | `https://slac-lcls.github.io/lute/v0.2.0/source/execution/ipc/` |
-| Source: task | `https://slac-lcls.github.io/lute/v0.2.0/source/tasks/task/` |
+| Home / overview | `https://slac-lcls.github.io/lute/v0.3.0` |
+| Quick start | `https://slac-lcls.github.io/lute/v0.3.0/quick_start/` |
+| Task configuration (YAML) | `https://slac-lcls.github.io/lute/v0.3.0/usage/configuration/` |
+| Installing LUTE | `https://slac-lcls.github.io/lute/v0.3.0/usage/installation/` |
+| Running LUTE | `https://slac-lcls.github.io/lute/v0.3.0/usage/running_lute/` |
+| Complete simple example | `https://slac-lcls.github.io/lute/v0.3.0/usage/hello_world/` |
+| Using smalldata_tools | `https://slac-lcls.github.io/lute/v0.3.0/usage/tasks/smalldata_tools/` |
+| Converting XTC1 to XTC2 (parallel Xtc1Reader + Xtc2Writer) | `https://slac-lcls.github.io/lute/v0.3.0/usage/tasks/xtc1_to_xtc2_conversion/` |
+| Creating a new Task (overview) | `https://slac-lcls.github.io/lute/v0.3.0/development/new_task/overview/` |
+| Creating a first-party Task | `https://slac-lcls.github.io/lute/v0.3.0/development/new_task/first_party/` |
+| Creating a third-party Task | `https://slac-lcls.github.io/lute/v0.3.0/development/new_task/third_party/` |
+| Creating a new workflow | `https://slac-lcls.github.io/lute/v0.3.0/development/creating_workflows/` |
+| Airflow workflows | `https://slac-lcls.github.io/lute/v0.3.0/development/creating_workflows_airflow/` |
+| Maestro workflows | `https://slac-lcls.github.io/lute/v0.3.0/development/creating_workflows_maestro/` |
+| Dynamic run-time workflows (incl. run_type branching) | `https://slac-lcls.github.io/lute/v0.3.0/development/dynamic_workflows/` |
+| Database spec v2 | `https://slac-lcls.github.io/lute/v0.3.0/design/database_v2/` |
+| Database spec v1 | `https://slac-lcls.github.io/lute/v0.3.0/design/database/` |
+| Source: managed_tasks | `https://slac-lcls.github.io/lute/v0.3.0/source/managed_tasks/` |
+| Source: executor | `https://slac-lcls.github.io/lute/v0.3.0/source/execution/executor/` |
+| Source: ipc | `https://slac-lcls.github.io/lute/v0.3.0/source/execution/ipc/` |
+| Source: task | `https://slac-lcls.github.io/lute/v0.3.0/source/tasks/task/` |
+| Source: version_utils | `https://slac-lcls.github.io/lute/v0.3.0/source/io/version_utils/` |
 
 ---
 
@@ -117,6 +129,9 @@ Base: `https://slac-lcls.github.io/lute/v0.2.0`
 | How do I add a tasklet? | `lute/tasks/tasklets.py`, `lute/managed_tasks.py` | `/development/new_task/third_party/` |
 | How does Airflow integration work? | `lute/execution/launch.py` | `/development/creating_workflows_airflow/` |
 | How does the Executor spawn Tasks? | `lute/execution/executor.py` | `/source/execution/executor/` |
+| How does run_type branching work? | `lute/io/config.py` (parser logic) | `/development/dynamic_workflows/` |
+| How do I reconstruct a YAML from the DB? | `utilities/lute_cfg/` | see `references/lute-versioning.md` |
+| How do I convert XTC1 → XTC2? | `lute/tasks/xtc.py` | `/usage/tasks/xtc1_to_xtc2_conversion/` |
 
 ---
 
@@ -130,6 +145,6 @@ Base: `https://slac-lcls.github.io/lute/v0.2.0`
 | `launch_airflow` | `launch_scripts.launch_airflow:main` | Launch a full workflow DAG via Airflow |
 | `submit_slurm` | `launch_scripts.submit_slurm:main` | Submit a single managed task to SLURM |
 | `setup_lute` | `lute_utilities.setup.setup_lute:main` | Set up LUTE for an experiment (venvs, config, eLog) |
-| `lute_cfg` | `lute_utilities.lute_cfg.lute_cfg:main` | LUTE configuration utility |
+| `lute_cfg` | `lute_utilities.lute_cfg.lute_cfg:main` | Reconstruct a YAML from the DB and restore repos to their versioned state (new in v0.3.0) |
 | `lute_help` | `lute_utilities.help.task_parameters:main` | Show task parameter help |
 | `dbview` | `lute_utilities.dbview.dbview:main` | View the LUTE SQLite database |

@@ -1,0 +1,53 @@
+!LUTE_DAG
+# MFX combined SMD workflow — SAXS + XES in a single eLog workflow.
+# Use this when both a scattering detector (e.g. Jungfrau) and an XES spectrometer
+# (e.g. ePix100 Von Hamos) are active in the same experiment.
+#
+# run_type behaviour (additive — all matching branches run in parallel):
+#   DARK     → SmallDataProducer2 only
+#   GEOM     → SmallDataProducer2 → BayFAIOptimizer2
+#              + SmallDataXESAnalyzer (NOT_DARK fires on GEOM too)
+#   DATA     → SmallDataProducer2 → SmallDataXSSAnalyzer
+#              + SmallDataXESAnalyzer (NOT_DARK fires on DATA too)
+#   (other)  → SmallDataProducer2 → SmallDataXESAnalyzer (NOT_DARK catch-all)
+#
+# The NOT_DARK branch ensures XESAnalyzer always runs on any non-dark run,
+# including GEOM calibration runs where spectral monitoring may still be useful.
+# Remove the NOT_DARK branch if XES analysis should only run on DATA runs.
+#
+# slurm_params: fill in --partition and --account before deploying.
+- !branch_daq2
+  daq2:
+    task_name: "SmallDataProducer2"
+    slurm_params: ""
+    next:
+    - !run_type
+      GEOM:
+        task_name: "BayFAIOptimizer2"
+        slurm_params: ""
+        next: []
+      DATA:
+        task_name: "SmallDataXSSAnalyzer"
+        slurm_params: ""
+        next: []
+      NOT_DARK:
+        task_name: "SmallDataXESAnalyzer"
+        slurm_params: ""
+        next: []
+  daq1:
+    task_name: "SmallDataProducer"
+    slurm_params: ""
+    next:
+    - !run_type
+      GEOM:
+        task_name: "BayFAIOptimizer"
+        slurm_params: ""
+        next: []
+      DATA:
+        task_name: "SmallDataXSSAnalyzer"
+        slurm_params: ""
+        next: []
+      NOT_DARK:
+        task_name: "SmallDataXESAnalyzer"
+        slurm_params: ""
+        next: []

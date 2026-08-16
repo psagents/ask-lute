@@ -10,8 +10,8 @@
 
 ## Key website URL
 
-- Task configuration (YAML): `https://slac-lcls.github.io/lute/v0.2.0/usage/configuration/`
-- Running LUTE: `https://slac-lcls.github.io/lute/v0.2.0/usage/running_lute/`
+- Task configuration (YAML): `https://slac-lcls.github.io/lute/v0.3.0/usage/configuration/`
+- Running LUTE: `https://slac-lcls.github.io/lute/v0.3.0/usage/running_lute/`
 
 ---
 
@@ -26,7 +26,7 @@ title: My experiment run
 experiment: myexp
 run: 1
 date: "2025/01/01"
-lute_version: 0.2.0
+lute_version: 0.3.0
 task_timeout: 600       # seconds; default 10 min
 work_dir: /path/to/work # required — DB and outputs land here
 ```

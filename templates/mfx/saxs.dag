@@ -1,0 +1,42 @@
+!LUTE_DAG
+# MFX TR-SAXS/WAXS workflow with run_type branching.
+# A single eLog workflow (END_OF_RUN trigger) handles calibration and data.
+#
+# run_type behaviour:
+#   DARK  → SmallDataProducer2 only (no downstream analysis)
+#   GEOM  → SmallDataProducer2 → BayFAIOptimizer2 (geometry calibration)
+#   DATA  → SmallDataProducer2 → SmallDataXSSAnalyzer (difference scattering)
+#
+# For experiments with both SAXS and XES detectors active simultaneously,
+# use templates/mfx/smd.dag instead.
+#
+# slurm_params: fill in --partition and --account before deploying.
+# Example producer: "--nodes=4 --ntasks-per-node=50 --partition=milano --account=lcls:<EXP>"
+# Example analyzer: "--partition=milano --account=lcls:<EXP>"
+- !branch_daq2
+  daq2:
+    task_name: "SmallDataProducer2"
+    slurm_params: ""
+    next:
+    - !run_type
+      GEOM:
+        task_name: "BayFAIOptimizer2"
+        slurm_params: ""
+        next: []
+      DATA:
+        task_name: "SmallDataXSSAnalyzer"
+        slurm_params: ""
+        next: []
+  daq1:
+    task_name: "SmallDataProducer"
+    slurm_params: ""
+    next:
+    - !run_type
+      GEOM:
+        task_name: "BayFAIOptimizer"
+        slurm_params: ""
+        next: []
+      DATA:
+        task_name: "SmallDataXSSAnalyzer"
+        slurm_params: ""
+        next: []

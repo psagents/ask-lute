@@ -1,0 +1,74 @@
+%YAML 1.3
+---
+# Description of the configuration or experiment
+title: ""
+# LCLS experiment name (e.g. xpptut15)
+experiment: ""
+# DAQ run number
+run: ""
+# Start date of analysis (YYYY/MM/DD)
+date: ""
+# LUTE version — do not change unless forcing an older version
+lute_version: 0.3.0
+# Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
+task_timeout: 3600
+# Main working directory — must exist and be writable; database and outputs land here
+work_dir: ""
+---
+# ManagedTask: Xtc1Reader (MPIExecutor — psana1 environment)
+# Reads event data from LCLS-I XTC files and streams it via ZMQ to Xtc2Writer.
+#
+# REQUIREMENTS:
+#   - MUST be submitted in parallel with Xtc2Writer (both tasks in the same DAG at root level)
+#   - ntasks-per-node MUST be identical for Xtc1Reader and Xtc2Writer
+#   - This task runs in the psana1 (conda1) environment automatically via shell_source()
+#
+# DAG example:
+#   !LUTE_DAG
+#   - task_name: "Xtc1Reader"
+#     slurm_params: "--nodes=1 --tasks-per-node=11 --partition=milano --account=lcls:<EXP>"
+#     next: []
+#   - task_name: "Xtc2Writer"
+#     slurm_params: "--nodes=1 --tasks-per-node=11 --partition=milano --account=lcls:<EXP>"
+#     next: []
+#
+# NOTE: 11 ntasks-per-node → 10 MPI ranks for the Task (Executor uses 1 core).
+# Use the same number for both tasks.
+ReadXtc1:
+
+  # Optional: limit conversion to N events. Omit or leave empty to process all events.
+  # nevents: 200
+
+  # Optional: path to a CSV file of event indices. Overrides nevents if both are set.
+  # eventfile: ""
+
+  # Describes how to read each detector from psana1 and write it to XTC2.
+  # Top-level keys become the detector names in the XTC2 file.
+  # MUST be identical to the xtc1_access_pattern in WriteXtc2.
+  # Required — at least one detector entry must be provided.
+  xtc1_access_pattern:
+    # Example: converting a Jungfrau 1M detector
+    # jungfrau1M:
+    #   - xtc2_attr_name: "calib"         # Name for this field in XTC2
+    #     object_name: "jungfrau1M"        # psana1 object name
+    #     object_type: "psana.Detector"    # psana1 object type
+    #     object_field_name: "calib"       # Method on psana1 object
+    #
+    # Example: converting a slow scalar (lxt_fast timing encoder)
+    # lxt_fast:
+    #   - xtc2_attr_name: "lxt_fast"
+    #     object_name: "lxt_fast"
+    #     object_type: "psana.Detector"
+    #     object_field_name: "__call__"    # __call__ = use object as a function
+    #
+    # Example: chained access (BLD EBeam photon energy)
+    # EBeam:
+    #   - xtc2_attr_name: "photon_energy"
+    #     object_name: "EBeam"
+    #     object_type: "psana.Detector"
+    #     object_field_name: ["get", "ebeamPhotonEnergy"]  # det.get(evt).ebeamPhotonEnergy()
+    <detector_name>:
+      - xtc2_attr_name: ""       # Name for this field in XTC2 (e.g. "calib")
+        object_name: ""          # psana1 object name (e.g. "jungfrau1M")
+        object_type: "psana.Detector"
+        object_field_name: ""    # Method string or [method, attribute] list

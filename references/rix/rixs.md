@@ -93,6 +93,20 @@ Ask: "Are you using ChemRIXS (Andor VLS grating spectrometer) or qRIXS (Archon C
 
 ---
 
+## DAG Template
+
+**File:** `templates/rix/rixs.dag`
+
+RIX is always LCLS-II — no `!branch_daq2` needed.
+
+| `run_type` | Tasks that run |
+|---|---|
+| `DARK` | SmallDataProducer2 only |
+| `GEOM` | SmallDataProducer2 only (no RIXS spectral data on calibrant runs) |
+| `DATA` | SmallDataProducer2 → SmallDataXESAnalyzer |
+
+---
+
 ## Common Failure Modes
 
 | Symptom | Most likely cause | Fix |

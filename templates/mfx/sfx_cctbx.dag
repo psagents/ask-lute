@@ -1,0 +1,68 @@
+!LUTE_DAG
+# MFX SFX — CCTBX.XFEL pipeline — combined calibration + data workflow.
+# Handles geometry calibration and serial crystallography in a single eLog workflow.
+#
+# run_type behaviour:
+#   DARK  → SmallDataProducer2 only (pedestal/dark monitoring)
+#   GEOM  → SmallDataProducer2 (detSumAlgos: calib_max) → BayFAIOptimizer2
+#              NOTE: BayFAI .data output must be deployed to the psana calib DB
+#              (ask instrument scientist). CCTBX then loads calibration automatically.
+#   DATA  → SmallDataProducer2 (monitoring) → CCTBXIndexer
+#              → CCTBXScaler → CCTBXMerger
+#
+# IMPORTANT for GEOM runs:
+#   The SubmitSMD YAML block must include detSumAlgos with calib_max on the
+#   main detector. Add:
+#     producer_parameters:
+#       detSumAlgos:
+#         jungfrau:        # VERIFY ALIAS
+#           - "calib_max"
+#
+# CCTBXScaler (new in v0.3.0) runs a scaling-only pass and stores the output directory
+# in the LUTE database. CCTBXMerger auto-resolves input_path from that DB entry.
+#
+# For CrystFEL indexing instead of CCTBX, use templates/mfx/sfx_crystfel.dag.
+# For CCTBX parameters, consult @ask-cctbx-xfel.
+#
+# slurm_params: fill in --partition and --account before deploying.
+# SmallData producer: "--nodes=4 --ntasks-per-node=50 --partition=milano --account=lcls:<EXP>"
+# CCTBXIndexer/Scaler/Merger: "--nodes=N --ntasks-per-node=M --partition=milano --account=lcls:<EXP>"
+- !branch_daq2
+  daq2:
+    task_name: "SmallDataProducer2"
+    slurm_params: ""
+    next:
+    - !run_type
+      GEOM:
+        task_name: "BayFAIOptimizer2"
+        slurm_params: ""
+        next: []
+      DATA:
+        task_name: "CCTBXIndexer"
+        slurm_params: ""
+        next:
+        - task_name: "CCTBXScaler"
+          slurm_params: ""
+          next:
+          - task_name: "CCTBXMerger"
+            slurm_params: ""
+            next: []
+  daq1:
+    task_name: "SmallDataProducer"
+    slurm_params: ""
+    next:
+    - !run_type
+      GEOM:
+        task_name: "BayFAIOptimizer"
+        slurm_params: ""
+        next: []
+      DATA:
+        task_name: "CCTBXIndexer"
+        slurm_params: ""
+        next:
+        - task_name: "CCTBXScaler"
+          slurm_params: ""
+          next:
+          - task_name: "CCTBXMerger"
+            slurm_params: ""
+            next: []

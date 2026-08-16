@@ -123,6 +123,29 @@ Replace `jungfrau` with `Rayonix`. Camera length PV: `"MFX:DET:MMS:04.RBV"`.
 
 ---
 
+## DAG Template
+
+**File:** `templates/mfx/saxs.dag`
+
+This DAG uses `run_type` branching so a **single END_OF_RUN eLog workflow** handles
+both geometry calibration and production runs automatically.
+
+| `run_type` | Tasks that run |
+|---|---|
+| `DARK` | SmallDataProducer2 only (no downstream analysis) |
+| `GEOM` | SmallDataProducer2 → BayFAIOptimizer2 |
+| `DATA` | SmallDataProducer2 → SmallDataXSSAnalyzer |
+
+> **Combined SAXS + XES:** If both a scattering detector and an XES spectrometer are
+> active in the same experiment, use `templates/mfx/smd.dag` instead. It additionally
+> routes `SmallDataXESAnalyzer` on all non-dark runs via a `NOT_DARK` branch.
+
+**Pairing with YAML config:** The same `templates/mfx/saxs.yaml` config file is used
+for both GEOM and DATA runs. The `detSumAlgos` block in `SubmitSMD` should be
+commented in for GEOM calibrant runs and commented out for DATA.
+
+---
+
 ## Common Failure Modes
 
 | Symptom | Most likely cause | Fix |

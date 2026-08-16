@@ -1,0 +1,32 @@
+!LUTE_DAG
+# MFX XES (X-ray Emission Spectroscopy) workflow with run_type branching.
+# A single eLog workflow (END_OF_RUN trigger) handles data and monitoring runs.
+#
+# run_type behaviour:
+#   DARK  → SmallDataProducer2 only (no XES analysis)
+#   GEOM  → SmallDataProducer2 only (calibrant frames; no XES spectral data)
+#   DATA  → SmallDataProducer2 → SmallDataXESAnalyzer
+#
+# For experiments with both XES and SAXS detectors active simultaneously,
+# use templates/mfx/smd.dag instead.
+#
+# slurm_params: fill in --partition and --account before deploying.
+- !branch_daq2
+  daq2:
+    task_name: "SmallDataProducer2"
+    slurm_params: ""
+    next:
+    - !run_type
+      DATA:
+        task_name: "SmallDataXESAnalyzer"
+        slurm_params: ""
+        next: []
+  daq1:
+    task_name: "SmallDataProducer"
+    slurm_params: ""
+    next:
+    - !run_type
+      DATA:
+        task_name: "SmallDataXESAnalyzer"
+        slurm_params: ""
+        next: []

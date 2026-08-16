@@ -10,10 +10,38 @@ title: "MFX SFX"                          # optional description
 experiment: ""                             # e.g. mfxl1013621 — VERIFY WITH USER
 run: ""                                    # auto-populated at runtime; leave empty
 date: ""                                   # YYYY/MM/DD
-lute_version: 0.2.0
+lute_version: 0.3.0
 task_timeout: 3600
 work_dir: ""                               # e.g. /sdf/data/lcls/ds/mfx/<exp>/results/lute_output — VERIFY WITH USER
 ---
+
+# ── SmallData (runs on every run_type in the combined sfx_*.dag workflows) ────
+# SmallDataProducer2 always runs first — both on GEOM (calibrant) runs and DATA
+# runs — so this block must be present in the combined workflow config.
+#
+# detSumAlgos is kept active unconditionally: on GEOM runs BayFAI reads the
+# accumulated calib_max image; on DATA runs it adds ~65 MB to the HDF5 but is
+# otherwise harmless. Do NOT toggle this per run_type — the !run_type DAG
+# branching controls which downstream tasks run, not this config.
+SubmitSMD:
+  # Path to smalldata_tools producer script — VERIFY WITH USER
+  producer: "{{ work_dir }}/smalldata_tools/lcls2_producers/smd_producer.py"
+
+  # Always smd2 for MFX (LCLS-II since Jul 2025)
+  lute_template_cfg:
+    template_name: "smd2_prod_config_template.py"
+    output_path: "{{ work_dir }}/smalldata_tools/lcls2_producers/prod_config_mfx.py"
+
+  # SmallData output — kept separate to avoid mixing with any standalone SMD runs
+  directory: "{{ work_dir }}/smd_output"
+
+  producer_parameters:
+
+    # Accumulated per-pixel maximum — required by BayFAIOptimizer2 on GEOM runs.
+    # Safe to leave enabled on DATA runs (accumulated field written to HDF5, ignored downstream).
+    detSumAlgos:
+      jungfrau:            # VERIFY ALIAS via run.detnames
+        - "calib_max"
 
 # ── Hit finding: Cheetah (default at MFX) ─────────────────────────────────────
 RunCheetah:

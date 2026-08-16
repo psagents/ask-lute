@@ -1,0 +1,75 @@
+!LUTE_DAG
+# MFX SFX — CrystFEL pipeline — combined calibration + data workflow.
+# Handles geometry calibration and serial crystallography in a single eLog workflow.
+#
+# run_type behaviour:
+#   DARK  → SmallDataProducer2 only (pedestal/dark monitoring)
+#   GEOM  → SmallDataProducer2 (detSumAlgos: calib_max) → BayFAIOptimizer2
+#   DATA  → SmallDataProducer2 (monitoring) → CheetahRunner
+#              → CrystFELIndexer → StreamFileConcatenator
+#                → PartialatorMerger → HKLComparer
+#
+# IMPORTANT for GEOM runs:
+#   The SubmitSMD YAML block must include detSumAlgos with calib_max on the
+#   main detector so BayFAI receives an accumulated calibrant image. Add:
+#     producer_parameters:
+#       detSumAlgos:
+#         jungfrau:        # VERIFY ALIAS
+#           - "calib_max"
+#
+# For CCTBX.XFEL indexing instead of CrystFEL, use templates/mfx/sfx_cctbx.dag.
+#
+# slurm_params: fill in --partition and --account before deploying.
+# SmallData producer: "--nodes=4 --ntasks-per-node=50 --partition=milano --account=lcls:<EXP>"
+# Cheetah/indexer: "--nodes=1 --ntasks-per-node=120 --partition=milano --account=lcls:<EXP>"
+- !branch_daq2
+  daq2:
+    task_name: "SmallDataProducer2"
+    slurm_params: ""
+    next:
+    - !run_type
+      GEOM:
+        task_name: "BayFAIOptimizer2"
+        slurm_params: ""
+        next: []
+      DATA:
+        task_name: "CheetahRunner"
+        slurm_params: ""
+        next:
+        - task_name: "CrystFELIndexer"
+          slurm_params: ""
+          next:
+          - task_name: "StreamFileConcatenator"
+            slurm_params: ""
+            next:
+            - task_name: "PartialatorMerger"
+              slurm_params: ""
+              next:
+              - task_name: "HKLComparer"
+                slurm_params: ""
+                next: []
+  daq1:
+    task_name: "SmallDataProducer"
+    slurm_params: ""
+    next:
+    - !run_type
+      GEOM:
+        task_name: "BayFAIOptimizer"
+        slurm_params: ""
+        next: []
+      DATA:
+        task_name: "CheetahRunner"
+        slurm_params: ""
+        next:
+        - task_name: "CrystFELIndexer"
+          slurm_params: ""
+          next:
+          - task_name: "StreamFileConcatenator"
+            slurm_params: ""
+            next:
+            - task_name: "PartialatorMerger"
+              slurm_params: ""
+              next:
+              - task_name: "HKLComparer"
+                slurm_params: ""
+                next: []

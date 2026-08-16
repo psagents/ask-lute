@@ -23,9 +23,9 @@ will fail at runtime. Missing any one of them produces a specific error:
 
 ## Key website URLs
 
-- Overview: `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/overview/`
-- First-party task: `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/first_party/`
-- Third-party task: `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/third_party/`
+- Overview: `https://slac-lcls.github.io/lute/v0.3.0/development/new_task/overview/`
+- First-party task: `https://slac-lcls.github.io/lute/v0.3.0/development/new_task/first_party/`
+- Third-party task: `https://slac-lcls.github.io/lute/v0.3.0/development/new_task/third_party/`
 
 ---
 

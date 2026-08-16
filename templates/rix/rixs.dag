@@ -1,0 +1,20 @@
+!LUTE_DAG
+# RIX RIXS workflow with run_type branching.
+# RIX is always LCLS-II — no !branch_daq2 needed.
+#
+# run_type behaviour:
+#   DARK  → SmallDataProducer2 only (no spectral analysis)
+#   GEOM  → SmallDataProducer2 only (no RIXS spectral data on calibrant runs)
+#   DATA  → SmallDataProducer2 → SmallDataXESAnalyzer
+#
+# slurm_params: fill in --partition and --account before deploying.
+# Example producer: "--nodes=4 --ntasks-per-node=120 --partition=milano --account=lcls:<EXP>"
+# Example analyzer: "--partition=milano --account=lcls:<EXP>"
+task_name: "SmallDataProducer2"
+slurm_params: ""
+next:
+- !run_type
+  DATA:
+    task_name: "SmallDataXESAnalyzer"
+    slurm_params: ""
+    next: []
