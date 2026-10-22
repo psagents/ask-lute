@@ -8,14 +8,14 @@
 #          for each batch to finish before starting the next - needed because
 #          each indexing job typically needs several nodes (verified baseline:
 #          4 nodes for CCTBXIndexer + 1 for the wrapper job managing it, see
-#          cctbx-sfx-workflow.md §6), and many experiments have a node/core
+#          cctbx-reprocess-workflow.md §6), and many experiments have a node/core
 #          allocation budget that submitting every run at once would exceed.
 #
 # Fill in the CONFIGURATION section below for a specific experiment, then:
 #   1. Generate one Index+Scale config per run under CONFIG_DIR (see
 #      IndexCCTBXXFEL.yaml / ScaleCCTBXXFEL.yaml templates) - each with its own
 #      unique phil_file and its own {work_dir}/r00XX/ output subfolder
-#      (see references/cctbx-sfx-workflow.md §7 before writing these).
+#      (see references/cctbx-reprocess-workflow.md §7 before writing these).
 #   2. Generate one combined merge config (see MergeCCTBXXFEL.yaml template)
 #      whose phil_parameters.input_path lists every run's cctbx_scaled/ dir.
 #   3. Run this script.
@@ -90,7 +90,7 @@ source "${LUTE_PATH}/install/bin/activate_installation"
 # activate_installation computes PYTHONPATH from whatever `python3` is first on
 # PATH, which can silently resolve to the wrong version (e.g. a personal conda
 # env) rather than the one LUTE was built with. Pin it explicitly instead of
-# trusting ambient PATH resolution - see cctbx-sfx-workflow.md §6.
+# trusting ambient PATH resolution - see cctbx-reprocess-workflow.md §6.
 LUTE_PYVER="$(basename "$(ls -d "${LUTE_PATH}"/install/lib/python*/ | head -1)")"
 export PYTHONPATH="${LUTE_PATH}/install/lib/${LUTE_PYVER}/site-packages:${PYTHONPATH}"
 echo "OK: LUTE environment activated, PYTHONPATH pinned to ${LUTE_PYVER}"
@@ -186,7 +186,7 @@ for RUN in "${RUNS[@]}"; do
 done
 
 # ==============================================================================
-# SUBMIT THE COMBINED MERGE (single task, not a DAG - see cctbx-sfx-workflow.md §7)
+# SUBMIT THE COMBINED MERGE (single task, not a DAG - see cctbx-reprocess-workflow.md §7)
 # ==============================================================================
 
 if [ ! -f "${MERGE_CONFIG}" ]; then

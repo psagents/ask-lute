@@ -1,12 +1,12 @@
 # Workflow DAG template: IndexCCTBXXFEL -> ScaleCCTBXXFEL only (no per-run Merge).
-# Used for the multi-run pattern in references/cctbx-sfx-workflow.md §7: submit
+# Used for the multi-run pattern in references/cctbx-reprocess-workflow.md §7: submit
 # this DAG once per run (each with its own config, its own r00XX/ output
 # subfolder, and its own unique phil_file), then submit one combined
 # MergeCCTBXXFEL task separately across all runs' scaled output once every
 # run's Scale stage has finished (see submit_cctbx_multirun.sh).
 #
 # Replace <experiment> below. Resourcing is a verified-working baseline
-# (cctbx-sfx-workflow.md §6) - Scale doesn't benefit from multi-node the way
+# (cctbx-reprocess-workflow.md §6) - Scale doesn't benefit from multi-node the way
 # indexing does.
 
 !LUTE_DAG

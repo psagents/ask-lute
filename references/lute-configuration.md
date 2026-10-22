@@ -10,8 +10,8 @@
 
 ## Key website URL
 
-- Task configuration (YAML): `https://slac-lcls.github.io/lute/v0.2.0/usage/configuration/`
-- Running LUTE: `https://slac-lcls.github.io/lute/v0.2.0/usage/running_lute/`
+- Task configuration (YAML): `https://slac-lcls.github.io/lute/latest/usage/configuration/`
+- Running LUTE: `https://slac-lcls.github.io/lute/latest/usage/running_lute/`
 
 ---
 
@@ -57,15 +57,21 @@ Substitutions use double-brace notation `{{ ... }}`:
 | `{{ experiment }}` | Header field |
 | `{{ run:04d }}` | Header field with format spec |
 | `{{ $SDF_DATA_DIR }}` | Shell environment variable |
-| `{{ OtherTask.param }}` | Another task's parameter value |
+| `{{ OtherTask.param }}` | Another task's parameter value **as written in this YAML** |
 
 Example:
 ```yaml
 MyTask:
   output_dir: "{{ work_dir }}/results/{{ experiment }}_{{ run:04d }}"
   raw_dir: "{{ $SDF_DATA_DIR }}/{{ experiment }}"
-  ref_geom: "{{ FindGeometry.output_file }}"
+  peaks_dir: "{{ FindPeaksSFX.outdir }}"   # OK: a static value set in the YAML
 ```
+
+> **Substitution happens at parse time, before any task runs.** `{{ OtherTask.param }}`
+> is only correct for values that are literally set in the YAML (directories, static
+> paths). It cannot pass a task's *runtime result* (e.g. `{{ FindPeaksSFX.out_file }}`
+> resolves to `""`). For results, omit the field and let database chaining fill it —
+> see `result-passing.md`.
 
 ---
 

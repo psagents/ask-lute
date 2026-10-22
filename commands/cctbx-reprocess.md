@@ -1,4 +1,4 @@
-# /cctbx-reprocess — Reproducible CCTBX Index → Scale → Merge Setup
+# cctbx-reprocess — Reproducible CCTBX Index → Scale → Merge Setup
 
 This command drives **ad hoc, offline reprocessing** of already-collected runs
 through the CCTBX pipeline (`IndexCCTBXXFEL` → `ScaleCCTBXXFEL` → `MergeCCTBXXFEL`),
@@ -8,15 +8,16 @@ tracking — just direct SLURM submission against an existing LUTE install, the
 way a user reprocesses data they already collected to try different
 parameters or add more statistics to a merge.
 
-This is the one guided-setup exception to this skill's usual reference-only
-role (see the top-level `SKILL.md`) — everywhere else, consult the reference
-files directly rather than expecting an interactive flow.
+This is one of the guided-setup exceptions to this skill's usual
+reference-only role (see "Exceptions" in the top-level `SKILL.md`). If the
+user actually wants an ongoing, eLog-tag-driven pipeline that picks up new
+runs as they land, stop and hand off to `setup-cctbx-pipeline` instead.
 
 **Phases 1–4 are pure planning — no files are written and no scripts are
 run.** Execution happens only in Phase 5, after the user has reviewed and
 approved the complete config set.
 
-Read `references/cctbx-sfx-workflow.md` in full before starting — every phase
+Read `references/cctbx-reprocess-workflow.md` in full before starting — every phase
 below points back into it. Templates used: `templates/IndexCCTBXXFEL.yaml`,
 `templates/ScaleCCTBXXFEL.yaml`, `templates/MergeCCTBXXFEL.yaml`,
 `templates/submit_cctbx_multirun.sh`, `templates/cctbx_index_scale_only.yaml`.
@@ -31,16 +32,19 @@ whenever a value's meaning (not just its YAML field name) is in question.
 |---|---|
 | `experiment` | Ask if not already known from context |
 | `lute_path` | Ask for the LUTE install directory to use. If unsure, ask whether one already exists for this experiment (check under the experiment's `results/` area) before assuming a fresh install is needed |
-| `work_dir` | Ask where this reprocessing attempt's output should live, e.g. `results/<name>`. This becomes the shared `work_dir` for every run in this attempt (see `cctbx-sfx-workflow.md` §7 for the per-run subfolder layout that goes under it) |
+| `work_dir` | Ask where this reprocessing attempt's output should live, e.g. `results/<name>`. This becomes the shared `work_dir` for every run in this attempt (see `cctbx-reprocess-workflow.md` §7 for the per-run subfolder layout that goes under it) |
 
-Confirm a Kerberos ticket is valid (`klist -s`); if not, show the `kinit`
-command for the user to run themselves and wait for confirmation before Phase 5.
+Confirm a Kerberos ticket is valid in the shared ticket file Claude can see
+(`KRB5CCNAME=FILE:$HOME/krb5cc.ticket klist -s` — see `slurm-submission.md`
+§Kerberos; a plain `klist -s` checks the wrong cache). If not, show the
+`kinit -c FILE:$HOME/krb5cc.ticket ...` command for the user to run themselves
+and wait for confirmation before Phase 5.
 
 ---
 
 ## Phase 2 — Crystal & processing parameters
 
-Walk `cctbx-sfx-workflow.md` §1's required-information table explicitly — do
+Walk `cctbx-reprocess-workflow.md` §1's required-information table explicitly — do
 not guess or silently default any of these:
 
 1. **Space group and unit cell.** If the user doesn't have these to hand, or
@@ -109,7 +113,7 @@ One YAML with all three tasks chained (`IndexCCTBXXFEL` → `ScaleCCTBXXFEL` →
 Scale → Merge, `!ALL_SUCCESS` chained).
 
 ### Multi-run case
-Per `cctbx-sfx-workflow.md` §7:
+Per `cctbx-reprocess-workflow.md` §7:
 
 1. **One YAML per run**, each with `IndexCCTBXXFEL` + `ScaleCCTBXXFEL` only
    (no per-run Merge) — `output_output_dir`/`input_path` pointed at that run's

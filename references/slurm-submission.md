@@ -10,9 +10,9 @@
 
 ## Key website URLs
 
-- Installing LUTE: `https://slac-lcls.github.io/lute/v0.2.0/usage/installation/`
-- Running LUTE / SLURM submission: `https://slac-lcls.github.io/lute/v0.2.0/usage/running_lute/`
-- Quick start: `https://slac-lcls.github.io/lute/v0.2.0/quick_start/`
+- Installing LUTE: `https://slac-lcls.github.io/lute/latest/usage/installation/`
+- Running LUTE / SLURM submission: `https://slac-lcls.github.io/lute/latest/usage/running_lute/`
+- Quick start: `https://slac-lcls.github.io/lute/latest/quick_start/`
 
 ---
 
@@ -187,17 +187,32 @@ source /path/to/lute/install/bin/activate_installation
 
 `activate_installation` sets `PYTHONPATH` and `PATH` to include the LUTE `install/` prefix.
 
-### Step 2 — Source Python environment (psana)
-
-Tasks that need psana source it automatically via `managed_tasks.py` `shell_source()`.
-However, `submit_slurm` itself needs to be callable:
+**Pin `PYTHONPATH` explicitly after sourcing it.** `activate_installation` derives the
+Python version from whatever `python3` is first on `PATH`, not the version LUTE was
+built with. A personal conda env on S3DF login nodes commonly shadows it (e.g. 3.13 vs
+a 3.9 build), pointing `PYTHONPATH` at a nonexistent directory — symptom:
+`ModuleNotFoundError: No module named 'launch_scripts'` on `launch_slurm`/`submit_slurm`.
 
 ```bash
-# psana2 (Python 3.9 — default for most tasks)
-source /sdf/group/lcls/ds/ana/sw/conda2/manage/bin/psconda.sh
+source "${LUTE_DIR}/install/bin/activate_installation"
+LUTE_PYVER="$(basename "$(ls -d "${LUTE_DIR}"/install/lib/python*/ | head -1)")"
+export PYTHONPATH="${LUTE_DIR}/install/lib/${LUTE_PYVER}/site-packages:${PYTHONPATH}"
+```
 
-# psana1 (Python 3.9 — for LCLS-I data)
-source /sdf/group/lcls/ds/ana/sw/conda1/manage/bin/psconda.sh
+### Step 2 — psana environment (usually not needed)
+
+Tasks that need psana source it automatically via `managed_tasks.py` `shell_source()`,
+and the meson/prefix entry points in `install/bin/` have their own shebangs, so **do not
+source `psconda.sh` in the submission script** for a meson/prefix install. If you must
+(e.g. a virtual-env install where `submit_slurm` is otherwise not callable), wrap it in
+`set +u` / `set -u` — its conda deactivate hooks reference unset variables and will crash
+a `set -euo pipefail` script with `unbound variable`:
+
+```bash
+set +u
+source /sdf/group/lcls/ds/ana/sw/conda2/manage/bin/psconda.sh   # psana2 / LCLS-II
+# source /sdf/group/lcls/ds/ana/sw/conda1/manage/bin/psconda.sh # psana1 / LCLS-I
+set -u
 ```
 
 ### Step 3 — Submission script template

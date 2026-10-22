@@ -20,7 +20,7 @@ work_dir: ""
 # Uses the CCP4 CCTBX environment sourced at LCLS.
 #
 # Part of a 3-stage chain: IndexCCTBXXFEL -> ScaleCCTBXXFEL -> MergeCCTBXXFEL.
-# Before filling this in, read references/cctbx-sfx-workflow.md and ask the user
+# Before filling this in, read references/cctbx-reprocess-workflow.md and ask the user
 # for: space group, unit cell, a reference/refined detector geometry (if one
 # exists for this experiment), and the detector alias (confirm against
 # run.detnames, don't guess from the hutch table). Indexing without known
@@ -134,7 +134,7 @@ IndexCCTBXXFEL:
     # default (dispersion_extended), which is more conservative near already-
     # detected strong pixels and can find fewer spots than plain "dispersion" -
     # with nothing indicating the choice was never actually applied. See
-    # references/cctbx-sfx-workflow.md §8 before assuming defaults are fine.
+    # references/cctbx-reprocess-workflow.md §8 before assuming defaults are fine.
     # spotfinder_threshold_algorithm:
 
     # --- Indexing ---

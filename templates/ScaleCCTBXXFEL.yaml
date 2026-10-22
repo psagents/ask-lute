@@ -24,7 +24,7 @@ work_dir: ""
 # Typical use: run CCTBXScaler first, inspect unit cell statistics, then run CCTBXMerger
 # in merge-only mode (set dispatch_step_list in MergeCCTBXXFEL accordingly).
 #
-# See references/cctbx-sfx-workflow.md for the required-info checklist (unit cell,
+# See references/cctbx-reprocess-workflow.md for the required-info checklist (unit cell,
 # space group, reference model, real merging_d_min) and the PHIL blank-string
 # gotchas (scaling_model / output_prefix below) before filling this in.
 ScaleCCTBXXFEL:

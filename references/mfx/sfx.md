@@ -38,14 +38,19 @@ BayFAI produces a `.geom` file directly — no conversion needed.
 ### After BayFAI — CCTBX.XFEL path
 
 BayFAI produces calibrated geometry `.data` files (psana calibration format).
-CCTBX.XFEL picks these up **automatically** — no explicit geometry field is needed in the YAML.
+Once deployed, CCTBX.XFEL picks these up **automatically** from the psana calibration
+database.
 
 1. Run BayFAI on the calibrant run
 2. **Deploy the `.data` output to the psana calibration database**
    (ask the instrument scientist for the deploy command — this is a psana calib management step;
    verify which command is used at MFX: likely `calibcopy`, `calibman`, or a beamline script)
 3. CCTBX initializes its DataSource and loads calibration constants from the database automatically
-4. No `geometry` field is needed in `IndexCCTBXXFEL`
+4. **Still ask whether a refined `.expt` reference geometry exists** (e.g. from a prior
+   CCTBX ensemble refinement). If so, set it as
+   `IndexCCTBXXFEL.phil_parameters.input_reference_geometry` — it overrides the
+   image-header geometry and can substantially change indexing rate
+   (`../cctbx-reprocess-workflow.md` §1). Without one, no geometry field is needed.
 
 > If a calibrated geometry from a prior experiment at the same detector position is already
 > in the database, the deploy step can be skipped — ask the instrument scientist.
@@ -62,19 +67,27 @@ Calibrant run first (MANUAL):
     .geom → CrystFEL path: use directly in IndexCrystFEL + RunCheetah (no conversion)
     .data → CCTBX path: deploy to psana calib database (instrument scientist command)
 
-Main SFX run (END_OF_RUN):
+Main SFX run (END_OF_RUN) — CrystFEL path:
   └─► Hit finding   RunCheetah (CheetahRunner)            ← default at MFX
                     FindPeaksSFX (PeakFinderSFX)          ← fallback if no Cheetah
   └─► Indexing      IndexCrystFEL (CrystFELIndexer)       ← requires .geom; explicit path in YAML
-                    IndexCCTBXXFEL (CCTBXIndexer)         ← reads calibration from psana DB automatically
   └─► Concatenate   ConcatenateStreamFiles (StreamFileConcatenator)
   └─► Merge         MergePartialator (PartialatorMerger)
   └─► Statistics    CompareHKL (HKLComparer)
   └─► [optional]    ManipulateHKL (HKLManipulator)  →  DimpleSolve / RunSHELXC
+
+Main SFX run — CCTBX.XFEL path (no Cheetah / stream files / partialator):
+  └─► Index+integrate  IndexCCTBXXFEL (CCTBXIndexer)      ← spotfinding is built in
+  └─► Scale            ScaleCCTBXXFEL (CCTBXScaler)
+  └─► Merge            MergeCCTBXXFEL (CCTBXMerger)       ← usually across several runs
 ```
 
-If the user chooses CCTBX.XFEL instead of CrystFEL, delegate to `@ask-cctbx-xfel`
-for the indexing and merging parameters before filling those blocks.
+If the user chooses CCTBX.XFEL instead of CrystFEL, do not adapt the CrystFEL template:
+- **One-off / offline reprocessing** of collected runs → follow
+  `commands/cctbx-reprocess.md` (reference: `references/cctbx-reprocess-workflow.md`).
+- **Ongoing, eLog-tag-driven pipeline** during the beamtime → hand off to the
+  `setup-cctbx-pipeline` skill.
+- Consult `@ask-cctbx-xfel` for what individual indexing/merging parameters mean.
 
 ---
 

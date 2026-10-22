@@ -26,7 +26,7 @@ work_dir: ""
 #      merge-only step list shown in the dispatch section below.
 #      input_path will be auto-resolved from the ScaleCCTBXXFEL DB entry if left empty.
 #
-# See references/cctbx-sfx-workflow.md for the required-info checklist and the
+# See references/cctbx-reprocess-workflow.md for the required-info checklist and the
 # PHIL blank-string gotchas (scaling_model / output_prefix below).
 MergeCCTBXXFEL:
 

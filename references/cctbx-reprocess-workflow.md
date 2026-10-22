@@ -1,4 +1,4 @@
-# CCTBX SFX Workflow (IndexCCTBXXFEL → ScaleCCTBXXFEL → MergeCCTBXXFEL)
+# CCTBX Offline Reprocessing (IndexCCTBXXFEL → ScaleCCTBXXFEL → MergeCCTBXXFEL)
 
 This file captures lessons from real, hard-won debugging of a full CCTBX-only SFX
 pipeline (no CrystFEL/Cheetah): six rounds of a job dying before a correct run was
@@ -103,10 +103,10 @@ creates that directory.** If it's missing, every rank crashes with
 seconds.
 
 Any submission script for this workflow **must** `mkdir -p` the index/scale/merge
-output directories before calling `launch_slurm`/`submit_slurm`:
+output directories before calling `launch_slurm`/`submit_slurm` (layout per §7):
 
 ```bash
-mkdir -p "${WORK_DIR}/index" "${WORK_DIR}/scale" "${WORK_DIR}/merge"
+mkdir -p "${WORK_DIR}/cctbx_indexed" "${WORK_DIR}/cctbx_scaled" "${WORK_DIR}/cctbx_merged"
 ```
 (or whatever directory names the YAML's `output_output_dir` fields use).
 
@@ -124,7 +124,7 @@ carefully:
   from `IndexCCTBXXFEL`. Its validator only normalizes the given value to a list —
   it never calls `read_latest_db_entry`. You must set it explicitly to the same
   directory `IndexCCTBXXFEL.phil_parameters.output_output_dir` used (both are
-  static, parse-time-known paths under `work_dir`, so `{{ work_dir }}/index`
+  static, parse-time-known paths under `work_dir`, so `{{ work_dir }}/cctbx_indexed`
   substitution is correct here — this is NOT a case for task-result chaining).
 - **`MergeCCTBXXFEL.phil_parameters.input_path` DOES auto-resolve** from the LUTE
   DB (`read_latest_db_entry(work_dir, "ScaleCCTBXXFEL", "result.payload")`),

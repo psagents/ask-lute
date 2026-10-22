@@ -23,9 +23,9 @@ will fail at runtime. Missing any one of them produces a specific error:
 
 ## Key website URLs
 
-- Overview: `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/overview/`
-- First-party task: `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/first_party/`
-- Third-party task: `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/third_party/`
+- Overview: `https://slac-lcls.github.io/lute/latest/development/new_task/overview/`
+- First-party task: `https://slac-lcls.github.io/lute/latest/development/new_task/first_party/`
+- Third-party task: `https://slac-lcls.github.io/lute/latest/development/new_task/third_party/`
 
 ---
 
@@ -76,7 +76,8 @@ MyNewTask:
 **Key rules:**
 - `lute_config` is injected automatically — do **not** add it to the YAML block.
 - Use `{{ field }}` for header fields, `{{ $ENV_VAR }}` for shell env vars,
-  `{{ OtherTask.param }}` to reference another task's parameter.
+  `{{ OtherTask.param }}` to reference another task's *static* parameter (never a
+  runtime result — see `lute-configuration.md` §Variable substitution).
 - All parameters declared in `<Name>Parameters` with no default are **required** here;
   parameters with defaults can be omitted.
 - The reference config is `config/test.yaml` in the repo — use it as a template.

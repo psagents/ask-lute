@@ -14,9 +14,9 @@
 
 ## Key website URLs
 
-- Creating a new workflow (overview): `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows/`
-- Airflow workflows: `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows_airflow/`
-- Maestro workflows: `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows_maestro/`
+- Creating a new workflow (overview): `https://slac-lcls.github.io/lute/latest/development/creating_workflows/`
+- Airflow workflows: `https://slac-lcls.github.io/lute/latest/development/creating_workflows_airflow/`
+- Maestro workflows: `https://slac-lcls.github.io/lute/latest/development/creating_workflows_maestro/`
 
 ---
 
@@ -157,7 +157,7 @@ IndexCrystFEL:
 - The task hasn't run yet, so no actual file path exists
 - You end up with `in_file: ""` (empty string)
 
-**For complete details, see:** [references/result-passing.md](references/result-passing.md)
+**For complete details, see:** [result-passing.md](result-passing.md)
 
 ---
 

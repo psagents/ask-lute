@@ -1,0 +1,10 @@
+{
+  "slac-lcls/lute@dev": {
+    "sha": "7e82ddfa5611f7339276b03988af46ba860c83d3",
+    "checked": "2026-10-21"
+  },
+  "lcls-mlcv/lute@tag_based_multirun_workflows": {
+    "sha": "c60d20cf4a26c94fcbe5f0074e52ae19e70c6948",
+    "checked": "2026-10-21"
+  }
+}

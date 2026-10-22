@@ -78,28 +78,30 @@
 
 ## Website URL Map
 
-Base: `https://slac-lcls.github.io/lute/v0.2.0`
+Base: `https://slac-lcls.github.io/lute/latest` (`latest` follows the newest release;
+`dev` tracks the dev branch). Two pages exist only in older versions and stay pinned below.
 
 | Topic | URL |
 |---|---|
-| Home / overview | `https://slac-lcls.github.io/lute/v0.2.0` |
-| Quick start | `https://slac-lcls.github.io/lute/v0.2.0/quick_start/` |
-| Task configuration (YAML) | `https://slac-lcls.github.io/lute/v0.2.0/usage/configuration/` |
-| Installing LUTE | `https://slac-lcls.github.io/lute/v0.2.0/usage/installation/` |
-| Running LUTE | `https://slac-lcls.github.io/lute/v0.2.0/usage/running_lute/` |
-| Complete simple example | `https://slac-lcls.github.io/lute/v0.2.0/usage/complete_example/` |
-| Creating a new Task (overview) | `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/overview/` |
-| Creating a first-party Task | `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/first_party/` |
-| Creating a third-party Task | `https://slac-lcls.github.io/lute/v0.2.0/development/new_task/third_party/` |
-| Creating a new workflow | `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows/` |
-| Airflow workflows | `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows_airflow/` |
-| Maestro workflows | `https://slac-lcls.github.io/lute/v0.2.0/development/creating_workflows_maestro/` |
-| Database spec v2 | `https://slac-lcls.github.io/lute/v0.2.0/design/database_v2/` |
-| Database spec v1 | `https://slac-lcls.github.io/lute/v0.2.0/design/database_v1/` |
-| Source: managed_tasks | `https://slac-lcls.github.io/lute/v0.2.0/source/managed_tasks/` |
-| Source: executor | `https://slac-lcls.github.io/lute/v0.2.0/source/execution/executor/` |
-| Source: ipc | `https://slac-lcls.github.io/lute/v0.2.0/source/execution/ipc/` |
-| Source: task | `https://slac-lcls.github.io/lute/v0.2.0/source/tasks/task/` |
+| Home / overview | `https://slac-lcls.github.io/lute/latest` |
+| Quick start | `https://slac-lcls.github.io/lute/latest/quick_start/` |
+| Task configuration (YAML) | `https://slac-lcls.github.io/lute/latest/usage/configuration/` |
+| Installing LUTE | `https://slac-lcls.github.io/lute/latest/usage/installation/` |
+| Running LUTE | `https://slac-lcls.github.io/lute/latest/usage/running_lute/` |
+| Complete simple example (v0.2.0 only — removed from later docs) | `https://slac-lcls.github.io/lute/v0.2.0/usage/complete_example/` |
+| Creating a new Task (overview) | `https://slac-lcls.github.io/lute/latest/development/new_task/overview/` |
+| Creating a first-party Task | `https://slac-lcls.github.io/lute/latest/development/new_task/first_party/` |
+| Creating a third-party Task | `https://slac-lcls.github.io/lute/latest/development/new_task/third_party/` |
+| Creating a new workflow | `https://slac-lcls.github.io/lute/latest/development/creating_workflows/` |
+| Airflow workflows | `https://slac-lcls.github.io/lute/latest/development/creating_workflows_airflow/` |
+| Maestro workflows | `https://slac-lcls.github.io/lute/latest/development/creating_workflows_maestro/` |
+| Database spec v2 | `https://slac-lcls.github.io/lute/latest/design/database_v2/` |
+| Database overview | `https://slac-lcls.github.io/lute/latest/design/database/` |
+| Database spec v1 (legacy, v0.2.0 docs only) | `https://slac-lcls.github.io/lute/v0.2.0/design/database_v1/` |
+| Source: managed_tasks | `https://slac-lcls.github.io/lute/latest/source/managed_tasks/` |
+| Source: executor | `https://slac-lcls.github.io/lute/latest/source/execution/executor/` |
+| Source: ipc | `https://slac-lcls.github.io/lute/latest/source/execution/ipc/` |
+| Source: task | `https://slac-lcls.github.io/lute/latest/source/tasks/task/` |
 
 ---
 
