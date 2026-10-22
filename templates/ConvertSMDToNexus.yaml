@@ -9,7 +9,7 @@ run: ""
 # Start date of analysis (YYYY/MM/DD)
 date: ""
 # LUTE version — do not change unless forcing an older version
-lute_version: 0.2.0
+lute_version: 0.3.0
 # Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
 task_timeout: 600
 # Main working directory — must exist and be writable; database and outputs land here

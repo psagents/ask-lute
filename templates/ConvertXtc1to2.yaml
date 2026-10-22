@@ -1,4 +1,9 @@
 %YAML 1.3
+# DEPRECATED as of LUTE v0.3.0
+# The single-task ConvertXtc1to2 approach has been replaced by a parallel two-task
+# workflow: ReadXtc1 (Xtc1Reader) + WriteXtc2 (Xtc2Writer).
+# Use templates/ReadXtc1.yaml and templates/WriteXtc2.yaml instead.
+# Docs: https://slac-lcls.github.io/lute/v0.3.0/usage/tasks/xtc1_to_xtc2_conversion/
 ---
 # Description of the configuration or experiment
 title: ""
@@ -9,7 +14,7 @@ run: ""
 # Start date of analysis (YYYY/MM/DD)
 date: ""
 # LUTE version — do not change unless forcing an older version
-lute_version: 0.2.0
+lute_version: 0.3.0
 # Timeout in seconds before the task is killed (should be less than the SLURM job timeout)
 task_timeout: 600
 # Main working directory — must exist and be writable; database and outputs land here

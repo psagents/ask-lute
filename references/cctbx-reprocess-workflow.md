@@ -31,7 +31,7 @@ silently produces a technically-running but scientifically weak first pass:
 | **High-resolution cutoff / `merging_d_min`** | Required by `cctbx.xfel.merge` even in scaling-only mode; wrong values silently produce empty or garbage merged output | Do NOT invent a placeholder value silently — tell the user you're using one and that it must be revisited after inspecting first-pass stats |
 | **Reference detector geometry** (a refined `.expt` file, e.g. from a prior BayFAI/geometry-optimization run) | `IndexCCTBXXFEL`'s `phil_parameters.input_reference_geometry` — using a refined geometry instead of raw image-header geometry can substantially change indexing rate | Ask if a refined geometry file exists for this experiment (often under a shared/common results directory) before falling back to image-header geometry |
 | **Reference PDB/MTZ for scaling** (`scaling_model`, mark0 algorithm) | Better absolute scaling than internal Wilson/KB scaling | OK to leave unset (see §3 for how to leave it unset *correctly*) |
-| **Detector alias** (`data_spec.detector_address`) | Must match `run.detnames`/`event_keys` for this experiment, not guessed from the hutch table | Confirm with the user; use `references/hutches/{hutch}.md` only as a starting menu of plausible aliases, never as ground truth |
+| **Detector alias** (`data_spec.detector_address`) | Must match `run.detnames`/`event_keys` for this experiment, not guessed from the hutch table | Confirm with the user against the psana `run.detnames` output for one of the runs; never accept a colloquial detector name as ground truth |
 | **Run number(s)** | — | Ask explicitly |
 
 **If a previous CCTBX run exists for this same experiment** (check the
