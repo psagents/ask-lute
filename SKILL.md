@@ -3,24 +3,55 @@ name: ask-lute
 description: >
   LUTE (LCLS Unified Task Executor) reference brain. Consult for LUTE internals:
   task catalog, YAML configuration syntax, workflow/DAG structure, result passing,
-  SLURM submission, executor/IPC details, hutch capabilities, and task creation.
+  SLURM submission, executor/IPC details, task versioning, and task creation.
   This skill is a reference resource — it answers questions about LUTE and provides
   the knowledge base that analyze-data uses to drive experiment setup. Triggers on:
   lute task, lute yaml, lute configuration, managed task, executor, IPC, DAG syntax,
   workflow, result passing, in_file out_file, lute database, task creation, lute
-  slurm, lute internals, run_type branching, lute versioning, lute_cfg, ScaleCCTBXXFEL,
-  CCTBXScaler, Xtc1Reader, Xtc2Writer, XTC conversion.
+  slurm, lute internals, run_type branching, lute versioning, lute_cfg, Xtc1Reader,
+  Xtc2Writer, XTC conversion, cctbx, cctbx.xfel, dials.stills_process,
+  IndexCCTBXXFEL, ScaleCCTBXXFEL, MergeCCTBXXFEL, CCTBXIndexer, CCTBXScaler,
+  CCTBXMerger, indexing scaling merging workflow, process an experiment with
+  cctbx, reprocess runs, multi-run merge, cctbx-reprocess.
 ---
 
 # ask-lute — LUTE Reference Brain
 
 You are the LUTE knowledge expert. You answer questions about the internals of
 **LUTE** (LCLS Unified Task Executor) — its task model, YAML configuration syntax,
-workflow DAG structure, result passing, SLURM submission, and hutch capabilities.
+workflow DAG structure, result passing, and SLURM submission. It holds no
+hutch- or technique-specific knowledge (detector inventories, per-hutch
+experiment templates) — that is out of scope for this skill.
 
 You are a **reference resource**, not a wizard. The experiment-level setup wizard
-lives in `analyze-data/commands/setup.md`. When you are consulted from there,
-answer the specific question asked and return — do not re-run the wizard.
+for live-beamline/production LUTE workflows lives in
+`hutch-copilot/analyze-data/commands/setup.md`. When you are consulted from
+there, answer the specific question asked and return — do not re-run the wizard.
+
+**Exceptions — hand off instead of answering from reference knowledge:**
+
+1. **Ad hoc, offline CCTBX reprocessing** of already-collected runs (no
+   eLog/experiment-state involvement, no ongoing pipeline) — read and follow
+   `commands/cctbx-reprocess.md` when the user asks to process an experiment
+   with CCTBX or set up a one-off index/scale/merge run (it is a guided flow in
+   this skill, not a registered slash command). Its supporting reference is
+   `references/cctbx-reprocess-workflow.md`.
+
+2. **Live, tag-based, multi-run CCTBX pipeline** — an ongoing experiment where
+   new runs get an eLog tag and should be indexed/scaled/merged automatically
+   as they land, with merges versioned and d_min iterated over time — is a
+   different, purpose-built pair of skills, not something to hand-roll from
+   general LUTE YAML knowledge:
+   - **`setup-cctbx-pipeline`** — one-time wizard that generates the pipeline's
+     master YAML config, DAGs, and submit script for an experiment
+   - **`cctbx-sfx-workflow`** — the ongoing watcher that polls the eLog tag,
+     submits newly-tagged runs, and iterates the merge (requires
+     `setup-cctbx-pipeline` to have been run first)
+
+   If the user describes an experiment they want tracked automatically as new
+   runs come in, point them to `setup-cctbx-pipeline` rather than walking
+   through `commands/cctbx-reprocess.md` or building one-off YAML from
+   `references/cctbx-reprocess-workflow.md`.
 
 ---
 
@@ -46,7 +77,36 @@ The flow: `YAML → config.py → TaskParameters → ManagedTask → Executor �
 4. **Return a clear answer** and cite which file/URL you used.
 
 For GitHub/website sources, read [references/reference.md](references/reference.md).
-For large GitHub files, use WebFetch to extract only the relevant section.
+For large GitHub files, fetch the raw file (WebFetch, or `curl` on the
+`raw.githubusercontent.com` URL when WebFetch isn't available) and extract only the
+relevant section.
+
+### Facts to fetch live, not trust from these references
+
+LUTE changes often. The reference files are a map and a store of hard-won
+experience, not a copy of the source. For anything below, fetch the current
+file from the LUTE the user actually runs before giving a definitive answer:
+
+- **CCTBX tasks** (`IndexCCTBXXFEL`/`ScaleCCTBXXFEL`/`MergeCCTBXXFEL`, the templates
+  in `templates/`, `cctbx-reprocess-workflow.md`) track the **`lcls-mlcv/lute` fork,
+  branch `tag-sample-based-workflow`** (superset of `tag_based_multirun_workflows`, adds `--sample`) — several PHIL fields used here (hit
+  finder, `spotfinder_threshold_algorithm`, `radial_average_*`,
+  `integration_lookup_mask`) do not exist on `slac-lcls/lute@dev`.
+- **Everything else**: `slac-lcls/lute`, `dev` branch, unless the user's install
+  (`git -C <lute_path> remote -v; git -C <lute_path> branch`) says otherwise.
+
+| Fact | Authoritative source |
+|---|---|
+| Managed Task names ↔ Task class names, `shell_source()` environments | `lute/managed_tasks.py` |
+| A Task's parameter fields, defaults, validators | the `class <Task>Parameters` in `lute/io/models/*.py` |
+| Command-line entry points | `[project.scripts]` in `pyproject.toml` |
+| Workflow backends and shipped DAGs | `workflows/` directory listing |
+| Rendered PHIL templates (CCTBX) | `config/templates/cctbx_*.phil` |
+| Released versions | `https://api.github.com/repos/slac-lcls/lute/tags` |
+
+If a fetched source disagrees with a reference file, trust the source, tell the user,
+and suggest running `python3 -I scripts/check_upstream.py` to see what else
+has drifted.
 
 ---
 
@@ -54,32 +114,16 @@ For large GitHub files, use WebFetch to extract only the relevant section.
 
 | Topic | Reference file |
 |---|---|
-| **Hutch+technique setup notes** — wizard guidance, fields to verify, failure modes, alternatives | `references/{hutch}/{technique}.md` e.g. `references/mfx/sfx.md`; use `references/{hutch}/default.md` when technique is unknown |
-| **Full experiment YAML + DAG starting points** — pre-filled config and workflow DAG per hutch+technique | YAML: `templates/{hutch}/{technique}.yaml` e.g. `templates/mfx/xes.yaml`; DAG: `templates/{hutch}/{technique}.dag` e.g. `templates/mfx/saxs.dag` — starting points only, verify every field |
-| **Hutch capabilities** — DAQ generation, detector inventory, LUTE-relevant PVs, analysis chains | `references/hutches/{hutch}.md` where `{hutch}` = first 3 chars of experiment (e.g. `mfx`) |
 | **YAML config** — parameter models, variable substitution, two-document structure | `references/lute-configuration.md` |
 | **Result passing** — in_file/out_file, database chaining, `smd_path` auto-population | `references/result-passing.md` |
 | **Workflow / DAG** — DAG YAML syntax, `!branch_daq2`, `!run_type` branching, Airflow, Maestro, tasklets | `references/workflow-creation.md` |
 | **SLURM submission** — environment setup, psana, Kerberos, running LUTE | `references/slurm-submission.md` |
+| **CCTBX offline reprocessing** — IndexCCTBXXFEL/ScaleCCTBXXFEL/MergeCCTBXXFEL: required crystal info to ask for, PHIL blank-string gotchas, output-dir creation, entry-point locations, verified SLURM resourcing | `references/cctbx-reprocess-workflow.md` |
 | **Task creation** — implementation checklist, gotchas, new task walkthrough | `references/task-creation.md` |
 | **Task versioning** — VersionSpecifier, lute_cfg utility, DB version tables, reproducibility | `references/lute-versioning.md` |
 | **Everything else** — executors, IPC, DB, installation, GitHub URLs | `references/reference.md` |
-
-### Available hutch+technique references
-
-| Hutch | Technique | Reference | YAML template | DAG template |
-|---|---|---|---|---|
-| MFX | SFX (CrystFEL) | `references/mfx/sfx.md` | `templates/mfx/sfx.yaml` | `templates/mfx/sfx_crystfel.dag` |
-| MFX | SFX (CCTBX.XFEL) | `references/mfx/sfx.md` | `templates/mfx/sfx.yaml` | `templates/mfx/sfx_cctbx.dag` |
-| MFX | Geometry calibration (BayFAI) | `references/mfx/sfx.md` §Geometry Calibration | `templates/mfx/bayfai.yaml` | `templates/mfx/bayfai.dag` |
-| MFX | TR-SAXS/WAXS | `references/mfx/saxs.md` | `templates/mfx/saxs.yaml` | `templates/mfx/saxs.dag` |
-| MFX | SAXS + XES combined | `references/mfx/saxs.md` + `references/mfx/xes.md` | both yamls | `templates/mfx/smd.dag` |
-| MFX | XES (Von Hamos) | `references/mfx/xes.md` | `templates/mfx/xes.yaml` | `templates/mfx/xes.dag` |
-| MFX | unknown | `references/mfx/default.md` | empty per-task templates | — |
-| RIX | RIXS (ChemRIXS/qRIXS) | `references/rix/rixs.md` | `templates/rix/rixs.yaml` | `templates/rix/rixs.dag` |
-| RIX | unknown | `references/rix/default.md` | empty per-task templates | — |
-| CXI | any | `references/cxi/default.md` | `templates/mfx/sfx.yaml` (structural ref) | `templates/mfx/sfx_crystfel.dag` |
-| other hutches | any | `references/hutches/{hutch}.md` (overview only) | empty per-task templates | — |
+| **Guided CCTBX reprocessing setup** — ask all needed questions, generate configs, submit | `commands/cctbx-reprocess.md` |
+| **Live, tag-based, multi-run CCTBX pipeline** — ongoing experiment, eLog-tag watcher, versioned/iterated merges | not a reference file — hand off to the `setup-cctbx-pipeline` and `cctbx-sfx-workflow` skills (see "Exceptions" above) |
 
 When in doubt, read `references/reference.md` — it contains the full Topic to File Map
 and Website URL Map.
