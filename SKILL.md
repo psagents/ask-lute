@@ -1,57 +1,69 @@
 ---
 name: ask-lute
 description: >
-  LUTE (LCLS Unified Task Executor) reference brain. Consult for LUTE internals:
-  task catalog, YAML configuration syntax, workflow/DAG structure, result passing,
-  SLURM submission, executor/IPC details, task versioning, and task creation.
-  This skill is a reference resource — it answers questions about LUTE and provides
-  the knowledge base that analyze-data uses to drive experiment setup. Triggers on:
-  lute task, lute yaml, lute configuration, managed task, executor, IPC, DAG syntax,
-  workflow, result passing, in_file out_file, lute database, task creation, lute
-  slurm, lute internals, run_type branching, lute versioning, lute_cfg, Xtc1Reader,
-  Xtc2Writer, XTC conversion, cctbx, cctbx.xfel, dials.stills_process,
-  IndexCCTBXXFEL, ScaleCCTBXXFEL, MergeCCTBXXFEL, CCTBXIndexer, CCTBXScaler,
-  CCTBXMerger, indexing scaling merging workflow, process an experiment with
-  cctbx, reprocess runs, multi-run merge, cctbx-reprocess.
+  How to set up a LUTE (LCLS Unified Task Executor) workflow, and the LUTE
+  reference behind it. Dispatches to a sub-skill per analysis — BayFAI geometry
+  calibration, SmallData (XSS / XAS / XES), CCTBX SFX — each of which returns
+  the template, DAGs, trigger, LUTE install and output-log parser a caller needs.
+  Triggers on: set up lute, lute config, lute yaml, lute dag, workflow, trigger,
+  managed task, executor, result passing, in_file out_file, lute database, task
+  creation, lute slurm, run_type branching, lute versioning, bayfai, geometry
+  calibration, AgBh, smalldata, SubmitSMD, XSS, XAS, XES, azimuthal integration,
+  cctbx, cctbx.xfel, IndexCCTBXXFEL, ScaleCCTBXXFEL, MergeCCTBXXFEL, SFX
+  pipeline, d_min, Xtc1Reader, Xtc2Writer, XTC conversion.
 ---
 
-# ask-lute — LUTE Reference Brain
+# ask-lute — setting up LUTE workflows
 
-You are the LUTE knowledge expert. You answer questions about the internals of
-**LUTE** (LCLS Unified Task Executor) — its task model, YAML configuration syntax,
-workflow DAG structure, result passing, and SLURM submission. It holds no
-hutch- or technique-specific knowledge (detector inventories, per-hutch
-experiment templates) — that is out of scope for this skill.
+You hold **setup knowledge**: what a workflow needs in its config and DAG to run,
+and how to read what it writes. You hold no hutch-specific inventories, and no
+verdict on whether a result is scientifically good — that belongs to whoever
+called you (`hutch-copilot/assess-analysis`) and, for SFX, to `ask-cctbx-xfel`.
 
-You are a **reference resource**, not a wizard. The experiment-level setup wizard
-for live-beamline/production LUTE workflows lives in
-`hutch-copilot/analyze-data/commands/setup.md`. When you are consulted from
-there, answer the specific question asked and return — do not re-run the wizard.
+## Dispatch
 
-**Exceptions — hand off instead of answering from reference knowledge:**
+Identify the analysis, then read that sub-skill's `SKILL.md` and follow it.
 
-1. **Ad hoc, offline CCTBX reprocessing** of already-collected runs (no
-   eLog/experiment-state involvement, no ongoing pipeline) — read and follow
-   `commands/cctbx-reprocess.md` when the user asks to process an experiment
-   with CCTBX or set up a one-off index/scale/merge run (it is a guided flow in
-   this skill, not a registered slash command). Its supporting reference is
-   `references/cctbx-reprocess-workflow.md`.
+| Analysis | Sub-skill |
+|---|---|
+| Detector geometry calibration on a powder run — BayFAI, AgBh / LaB6 / CeO2 | [`bayfai/SKILL.md`](bayfai/SKILL.md) |
+| SmallData production and its analyzers — XSS, XAS, XES, azav, difference signal | [`smalldata/SKILL.md`](smalldata/SKILL.md) |
+| Serial crystallography with cctbx.xfel — index / scale / merge, d_min | [`cctbx/SKILL.md`](cctbx/SKILL.md) |
 
-2. **Live, tag-based, multi-run CCTBX pipeline** — an ongoing experiment where
-   new runs get an eLog tag and should be indexed/scaled/merged automatically
-   as they land, with merges versioned and d_min iterated over time — is a
-   different, purpose-built pair of skills, not something to hand-roll from
-   general LUTE YAML knowledge:
-   - **`setup-cctbx-pipeline`** — one-time wizard that generates the pipeline's
-     master YAML config, DAGs, and submit script for an experiment
-   - **`cctbx-sfx-workflow`** — the ongoing watcher that polls the eLog tag,
-     submits newly-tagged runs, and iterates the merge (requires
-     `setup-cctbx-pipeline` to have been run first)
+Anything else (CrystFEL, XTC conversion, a new task): answer from the references
+below and the per-task templates in `templates/`.
 
-   If the user describes an experiment they want tracked automatically as new
-   runs come in, point them to `setup-cctbx-pipeline` rather than walking
-   through `commands/cctbx-reprocess.md` or building one-off YAML from
-   `references/cctbx-reprocess-workflow.md`.
+## The setup contract
+
+Every sub-skill answers "set up X for experiment E" with these fields, so a caller
+can feed them straight to `hutch-lute render / plan / all`:
+
+| Field | Meaning |
+|---|---|
+| `template` | Path to one config template. `${{ var }}` is filled at render time; LUTE's own `{{ work_dir }}` / `{{ run:04d }}` pass through untouched. |
+| `context` | The `${{ }}` variables the template needs: the sub-skill's `defaults` file (`--context`) plus the operator's answers and resolved values (`--set-context`). |
+| `defaults` | `<sub-skill>/defaults/<hutch>.yaml`, else `default.yaml` where the sub-skill has one: the per-hutch knowledge as data, each value with its reason. |
+| `sets` | `TASK.BLOCK.KEY=value` overrides on top of the template. |
+| `dags` | Each DAG with its workflow name and eLog trigger (`START_OF_RUN`, `END_OF_RUN`, `MANUAL`, `RUN_PARAM_IS_VALUE:<name>:<value>`). A `.dag.j2` is rendered with the same context (`hutch-lute render --no-whitelist`); a `.dag` is copied. |
+| `lute` | `release: <version>` — in production; runs from the central build `/sdf/group/lcls/ds/tools/lute/<version>` (`dev` = lute-lcls 0.4.0+dev), pip venvs only if there is none. Or `source: <repo>@<branch>` — not in production, clone and build that branch (needs internet: not from a hutch host). |
+| `validate` | Optional command; non-zero exit means the rendered config must not be installed. |
+| `unreviewed` | Every parameter left at a default, with the default used. |
+| `parse` | Command per output log. Prints JSON facts, never a verdict. |
+
+### Walk the operator through — every sub-skill, before rendering
+
+Each sub-skill's *Walk the operator through* section lists what to ask. Do it as **one
+exchange**, not an interview:
+
+1. **Required.** Ask every required value in one message, each with the check beside
+   it (run it before rendering). Render nothing until they are answered.
+2. **Defaults.** Show the `defaults` file's values in one table, each with its comment,
+   and ask once: keep, or change which?
+3. **Unreviewed.** Whatever the operator did not look at — optional values left out,
+   defaults on a hutch that has only `default.yaml` — goes in `unreviewed`.
+
+That one exchange is the whole review: it is not a reason to resolve more facts before
+submitting. A value the operator does not know is listed as unreviewed, not chased.
 
 ---
 
@@ -87,12 +99,7 @@ LUTE changes often. The reference files are a map and a store of hard-won
 experience, not a copy of the source. For anything below, fetch the current
 file from the LUTE the user actually runs before giving a definitive answer:
 
-- **CCTBX tasks** (`IndexCCTBXXFEL`/`ScaleCCTBXXFEL`/`MergeCCTBXXFEL`, the templates
-  in `templates/`, `cctbx-reprocess-workflow.md`) track the **`lcls-mlcv/lute` fork,
-  branch `tag-sample-based-workflow`** (superset of `tag_based_multirun_workflows`, adds `--sample`) — several PHIL fields used here (hit
-  finder, `spotfinder_threshold_algorithm`, `radial_average_*`,
-  `integration_lookup_mask`) do not exist on `slac-lcls/lute@dev`.
-- **Everything else**: `slac-lcls/lute`, `dev` branch, unless the user's install
+- `slac-lcls/lute`, `dev` branch, unless the user's install
   (`git -C <lute_path> remote -v; git -C <lute_path> branch`) says otherwise.
 
 | Fact | Authoritative source |
@@ -118,12 +125,9 @@ has drifted.
 | **Result passing** — in_file/out_file, database chaining, `smd_path` auto-population | `references/result-passing.md` |
 | **Workflow / DAG** — DAG YAML syntax, `!branch_daq2`, `!run_type` branching, Airflow, Maestro, tasklets | `references/workflow-creation.md` |
 | **SLURM submission** — environment setup, psana, Kerberos, running LUTE | `references/slurm-submission.md` |
-| **CCTBX offline reprocessing** — IndexCCTBXXFEL/ScaleCCTBXXFEL/MergeCCTBXXFEL: required crystal info to ask for, PHIL blank-string gotchas, output-dir creation, entry-point locations, verified SLURM resourcing | `references/cctbx-reprocess-workflow.md` |
 | **Task creation** — implementation checklist, gotchas, new task walkthrough | `references/task-creation.md` |
 | **Task versioning** — VersionSpecifier, lute_cfg utility, DB version tables, reproducibility | `references/lute-versioning.md` |
 | **Everything else** — executors, IPC, DB, installation, GitHub URLs | `references/reference.md` |
-| **Guided CCTBX reprocessing setup** — ask all needed questions, generate configs, submit | `commands/cctbx-reprocess.md` |
-| **Live, tag-based, multi-run CCTBX pipeline** — ongoing experiment, eLog-tag watcher, versioned/iterated merges | not a reference file — hand off to the `setup-cctbx-pipeline` and `cctbx-sfx-workflow` skills (see "Exceptions" above) |
 
 When in doubt, read `references/reference.md` — it contains the full Topic to File Map
 and Website URL Map.

@@ -1,0 +1,17 @@
+!LUTE_DAG
+# BayFAI at MEC (LCLS-I): one powder, then the four Epix10ka quads fitted in parallel.
+# zip: entry i of every param_matrix list belongs to quad i. Quads from defaults/mec.yaml.
+# hutch-lute dags adds account/partition/reservation.
+task_name: "SmallDataProducer"
+slurm_params: "${{ slurm.smd }}"
+next:
+- !param_sweep
+  task_name: "BayFAIOptimizer"
+  slurm_params: "${{ slurm.bayfai }}"
+  zip: true
+  param_matrix:
+    detname: ${{ quads | map(attribute='detname') | list | tojson }}
+    fixed: ${{ quads | map(attribute='fixed') | list | tojson }}
+    center: ${{ quads | map(attribute='center') | list | tojson }}
+    bayfai_params: ${{ quads | map(attribute='bayfai_params') | list | tojson }}
+  next: []

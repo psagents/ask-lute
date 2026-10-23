@@ -1,0 +1,11 @@
+!LUTE_DAG
+# hutch-lute dags fills in --account/--partition.
+- task_name: "CCTBXScaler"
+  run_dependent: true
+  slurm_params: "--ntasks-per-node=60 --nodes=1 --cpus-per-task=1"
+  next:
+  - !ALL_SUCCESS
+    task_name: "CCTBXMerger"
+    run_dependent: false
+    slurm_params: "--ntasks-per-node=60 --nodes=1 --cpus-per-task=1"
+    next: []

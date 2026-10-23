@@ -1,0 +1,8 @@
+# SmallData defaults that hold across experiments. ROIs, ipm_var, detectors and PVs
+# are per experiment: they are asked, never defaulted.
+
+# Per DAG step. The producer with a full-detector ROI is write-bound: 4 nodes took
+# 6.2 min vs 6.1 min on 2 (mfx101941027 run 4), so do not scale nodes for it.
+slurm:
+  smd: "--nodes=4 --ntasks-per-node=50 --exclusive"
+  analyzer: "--nodes=1 --ntasks-per-node=60"
