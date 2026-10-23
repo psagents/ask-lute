@@ -28,7 +28,7 @@ every tilt fixed. MEC's four Epix10ka quads each need their own `fixed`, `center
 ```bash
 D=bayfai/defaults/<hutch>.yaml        # default.yaml if the hutch has none
 hutch-lute render --template bayfai/bayfai.yaml.j2 --context $D \
-    --set-context experiment=… date=… lute_version=… work_dir=… smalldata_tools=… \
+    --set-context experiment=… date=… lute_version=… work_dir=… \
     hutch=<hutch> daq=<lcls1|lcls2> detname=… calibrant=… dist=… \
     --whitelist-dir <LUTE>/config/templates --out <work_dir>/lute_output/<hutch>_lute.yaml
 hutch-lute render --template bayfai/bayfai.dag.j2 --context $D --set-context daq=… \
@@ -52,10 +52,14 @@ No `bayfai_params` (`bo_params` before 0.4.0) is written outside MEC's per-quad
 | `detname` | "Which detector?" (offer the file's `detname_hint`) | in `hutch-data detectors` for that run — never a colloquial name. MEC: the four quads come from the file |
 | `calibrant` | "Which calibrant?" | a name PyFAI knows (`AgBh`, `LaB6`, `CeO2`) |
 | `dist` | "Expected sample–detector distance **at the current detector z**, in metres?" | no default. Each rank searches `center.dist ± rank × resolution` with initial samples around it; mfx101941027 rendered the old 0.1 m against a true 0.1426 m and most of the budget searched below the answer |
-| `smalldata_tools` | "Which smalldata_tools checkout?" | has `<daq>_producers/smd_producer.py` |
 
 **Resolved, not asked:** `experiment`, `work_dir`, `date`, `lute_version`, `hutch`
 (caller); `daq` (`.xtc2` on disk → `lcls2`).
+
+**smalldata_tools is not asked or cloned by hand.** `SmallDataProducer` clones
+`slac-lcls/smalldata_tools` into `{{ work_dir }}/smalldata_tools` and applies LUTE's
+`smd.patch` on its first run (`clone_smalldata` tasklet). It skips the clone if that
+directory exists, so a custom fork goes there before the first run.
 
 **Defaults to review** (`defaults/<hutch>.yaml`, one table with each value's comment):
 `parallelized`, `fixed`, `bounds`, `resolutions`, `center` (beam centre and tilts),

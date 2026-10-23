@@ -60,7 +60,6 @@ Read off `lute/tasks/_smalldata.py`, not inferred:
 | `ccm` (XAS) | "CCM readback PV?" | also listed in `epics_pvs` |
 | `poni_file` (XSS) | "Geometry from a BayFAI run?" | exists; else `getAzIntParams` with `eBeam`, `center`, `dis_to_sam` by hand |
 | T-jump delays (XSS) | "How are pump-probe delays encoded — a scan motor, or event codes?" | event codes per delay, or bits (needs the LUTE PR for `xss_delay_bits`) |
-| `smalldata_tools` | "Which smalldata_tools checkout?" | has `<daq>_producers/smd_producer.py` |
 
 **Optional — ask once, omit if no answer:** `scan_var` (the scanned motor; must be in
 the run's `scan/` group, else the analyzer silently bins by event), `epics_pvs`
@@ -69,6 +68,11 @@ the run's `scan/` group, else the analyzer silently bins by event), `epics_pvs`
 **Resolved, not asked:** `experiment`, `work_dir`, `date`, `lute_version`, `hutch`
 (caller); `daq` (`.xtc2` on disk → `lcls2`); `smd_dir` (default
 `/sdf/data/lcls/ds/<hutch>/<exp>/hdf5/smalldata`).
+
+**smalldata_tools is not asked or cloned by hand.** `SmallDataProducer` clones
+`slac-lcls/smalldata_tools` into `{{ work_dir }}/smalldata_tools` and applies LUTE's
+`smd.patch` on its first run (`clone_smalldata` tasklet). It skips the clone if that
+directory exists, so a custom fork goes there before the first run.
 
 **Defaults to review** (`defaults/<hutch>.yaml`): `slurm.smd`, `slurm.analyzer`.
 
