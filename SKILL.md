@@ -9,10 +9,7 @@ description: >
   lute task, lute yaml, lute configuration, managed task, executor, IPC, DAG syntax,
   workflow, result passing, in_file out_file, lute database, task creation, lute
   slurm, lute internals, run_type branching, lute versioning, lute_cfg, Xtc1Reader,
-  Xtc2Writer, XTC conversion, cctbx, cctbx.xfel, dials.stills_process,
-  IndexCCTBXXFEL, ScaleCCTBXXFEL, MergeCCTBXXFEL, CCTBXIndexer, CCTBXScaler,
-  CCTBXMerger, indexing scaling merging workflow, process an experiment with
-  cctbx, reprocess runs, multi-run merge, cctbx-reprocess.
+  Xtc2Writer, XTC conversion.
 ---
 
 # ask-lute — LUTE Reference Brain
@@ -27,31 +24,6 @@ You are a **reference resource**, not a wizard. The experiment-level setup wizar
 for live-beamline/production LUTE workflows lives in
 `hutch-copilot/analyze-data/commands/setup.md`. When you are consulted from
 there, answer the specific question asked and return — do not re-run the wizard.
-
-**Exceptions — hand off instead of answering from reference knowledge:**
-
-1. **Ad hoc, offline CCTBX reprocessing** of already-collected runs (no
-   eLog/experiment-state involvement, no ongoing pipeline) — read and follow
-   `commands/cctbx-reprocess.md` when the user asks to process an experiment
-   with CCTBX or set up a one-off index/scale/merge run (it is a guided flow in
-   this skill, not a registered slash command). Its supporting reference is
-   `references/cctbx-reprocess-workflow.md`.
-
-2. **Live, tag-based, multi-run CCTBX pipeline** — an ongoing experiment where
-   new runs get an eLog tag and should be indexed/scaled/merged automatically
-   as they land, with merges versioned and d_min iterated over time — is a
-   different, purpose-built pair of skills, not something to hand-roll from
-   general LUTE YAML knowledge:
-   - **`setup-cctbx-pipeline`** — one-time wizard that generates the pipeline's
-     master YAML config, DAGs, and submit script for an experiment
-   - **`cctbx-sfx-workflow`** — the ongoing watcher that polls the eLog tag,
-     submits newly-tagged runs, and iterates the merge (requires
-     `setup-cctbx-pipeline` to have been run first)
-
-   If the user describes an experiment they want tracked automatically as new
-   runs come in, point them to `setup-cctbx-pipeline` rather than walking
-   through `commands/cctbx-reprocess.md` or building one-off YAML from
-   `references/cctbx-reprocess-workflow.md`.
 
 ---
 
@@ -87,12 +59,7 @@ LUTE changes often. The reference files are a map and a store of hard-won
 experience, not a copy of the source. For anything below, fetch the current
 file from the LUTE the user actually runs before giving a definitive answer:
 
-- **CCTBX tasks** (`IndexCCTBXXFEL`/`ScaleCCTBXXFEL`/`MergeCCTBXXFEL`, the templates
-  in `templates/`, `cctbx-reprocess-workflow.md`) track the **`lcls-mlcv/lute` fork,
-  branch `tag-sample-based-workflow`** (superset of `tag_based_multirun_workflows`, adds `--sample`) — several PHIL fields used here (hit
-  finder, `spotfinder_threshold_algorithm`, `radial_average_*`,
-  `integration_lookup_mask`) do not exist on `slac-lcls/lute@dev`.
-- **Everything else**: `slac-lcls/lute`, `dev` branch, unless the user's install
+- `slac-lcls/lute`, `dev` branch, unless the user's install
   (`git -C <lute_path> remote -v; git -C <lute_path> branch`) says otherwise.
 
 | Fact | Authoritative source |
@@ -118,12 +85,9 @@ has drifted.
 | **Result passing** — in_file/out_file, database chaining, `smd_path` auto-population | `references/result-passing.md` |
 | **Workflow / DAG** — DAG YAML syntax, `!branch_daq2`, `!run_type` branching, Airflow, Maestro, tasklets | `references/workflow-creation.md` |
 | **SLURM submission** — environment setup, psana, Kerberos, running LUTE | `references/slurm-submission.md` |
-| **CCTBX offline reprocessing** — IndexCCTBXXFEL/ScaleCCTBXXFEL/MergeCCTBXXFEL: required crystal info to ask for, PHIL blank-string gotchas, output-dir creation, entry-point locations, verified SLURM resourcing | `references/cctbx-reprocess-workflow.md` |
 | **Task creation** — implementation checklist, gotchas, new task walkthrough | `references/task-creation.md` |
 | **Task versioning** — VersionSpecifier, lute_cfg utility, DB version tables, reproducibility | `references/lute-versioning.md` |
 | **Everything else** — executors, IPC, DB, installation, GitHub URLs | `references/reference.md` |
-| **Guided CCTBX reprocessing setup** — ask all needed questions, generate configs, submit | `commands/cctbx-reprocess.md` |
-| **Live, tag-based, multi-run CCTBX pipeline** — ongoing experiment, eLog-tag watcher, versioned/iterated merges | not a reference file — hand off to the `setup-cctbx-pipeline` and `cctbx-sfx-workflow` skills (see "Exceptions" above) |
 
 When in doubt, read `references/reference.md` — it contains the full Topic to File Map
 and Website URL Map.

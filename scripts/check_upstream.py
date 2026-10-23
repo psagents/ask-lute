@@ -10,11 +10,8 @@ Usage:
     python3 -I scripts/check_upstream.py            # full report vs slac-lcls/lute@dev
     python3 -I scripts/check_upstream.py --record   # report, then save baseline
     python3 -I scripts/check_upstream.py --quiet    # print only if drift found
-    python3 -I scripts/check_upstream.py --repo lcls-mlcv/lute \
-        --ref tag-sample-based-workflow             # check against a fork/branch
-
-The CCTBX templates track the lcls-mlcv fork, so check them with --repo as above;
-expect CCTBX "drift" when checking against slac-lcls/lute@dev.
+    python3 -I scripts/check_upstream.py --repo <owner>/lute \
+        --ref <branch>                              # check against a fork/branch
 
 Set GITHUB_TOKEN (or have `gh` logged in) to lift the anonymous API limit.
 
