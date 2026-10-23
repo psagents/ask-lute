@@ -1,29 +1,56 @@
 ---
 name: ask-lute
 description: >
-  LUTE (LCLS Unified Task Executor) reference brain. Consult for LUTE internals:
-  task catalog, YAML configuration syntax, workflow/DAG structure, result passing,
-  SLURM submission, executor/IPC details, task versioning, and task creation.
-  This skill is a reference resource — it answers questions about LUTE and provides
-  the knowledge base that analyze-data uses to drive experiment setup. Triggers on:
-  lute task, lute yaml, lute configuration, managed task, executor, IPC, DAG syntax,
-  workflow, result passing, in_file out_file, lute database, task creation, lute
-  slurm, lute internals, run_type branching, lute versioning, lute_cfg, Xtc1Reader,
-  Xtc2Writer, XTC conversion.
+  How to set up a LUTE (LCLS Unified Task Executor) workflow, and the LUTE
+  reference behind it. Dispatches to a sub-skill per analysis — BayFAI geometry
+  calibration, SmallData (XSS / XAS / XES), CCTBX SFX — each of which returns
+  the template, DAGs, trigger, LUTE install and output-log parser a caller needs.
+  Triggers on: set up lute, lute config, lute yaml, lute dag, workflow, trigger,
+  managed task, executor, result passing, in_file out_file, lute database, task
+  creation, lute slurm, run_type branching, lute versioning, bayfai, geometry
+  calibration, AgBh, smalldata, SubmitSMD, XSS, XAS, XES, azimuthal integration,
+  cctbx, cctbx.xfel, IndexCCTBXXFEL, ScaleCCTBXXFEL, MergeCCTBXXFEL, SFX
+  pipeline, d_min, Xtc1Reader, Xtc2Writer, XTC conversion.
 ---
 
-# ask-lute — LUTE Reference Brain
+# ask-lute — setting up LUTE workflows
 
-You are the LUTE knowledge expert. You answer questions about the internals of
-**LUTE** (LCLS Unified Task Executor) — its task model, YAML configuration syntax,
-workflow DAG structure, result passing, and SLURM submission. It holds no
-hutch- or technique-specific knowledge (detector inventories, per-hutch
-experiment templates) — that is out of scope for this skill.
+You hold **setup knowledge**: what a workflow needs in its config and DAG to run,
+and how to read what it writes. You hold no hutch-specific inventories, and no
+verdict on whether a result is scientifically good — that belongs to whoever
+called you (`hutch-copilot/assess-analysis`) and, for SFX, to `ask-cctbx-xfel`.
 
-You are a **reference resource**, not a wizard. The experiment-level setup wizard
-for live-beamline/production LUTE workflows lives in
-`hutch-copilot/analyze-data/commands/setup.md`. When you are consulted from
-there, answer the specific question asked and return — do not re-run the wizard.
+## Dispatch
+
+Identify the analysis, then read that sub-skill's `SKILL.md` and follow it.
+
+| Analysis | Sub-skill |
+|---|---|
+| Detector geometry calibration on a powder run — BayFAI, AgBh / LaB6 / CeO2 | [`bayfai/SKILL.md`](bayfai/SKILL.md) |
+| SmallData production and its analyzers — XSS, XAS, XES, azav, difference signal | [`smalldata/SKILL.md`](smalldata/SKILL.md) |
+| Serial crystallography with cctbx.xfel — index / scale / merge, d_min | [`cctbx/SKILL.md`](cctbx/SKILL.md) |
+
+Anything else (CrystFEL, XTC conversion, a new task): answer from the references
+below and the per-task templates in `templates/`.
+
+## The setup contract
+
+Every sub-skill answers "set up X for experiment E" with these fields, so a caller
+can feed them straight to `hutch-lute render / plan / all`:
+
+| Field | Meaning |
+|---|---|
+| `template` | Path to one config template. `${{ var }}` is filled at render time; LUTE's own `{{ work_dir }}` / `{{ run:04d }}` pass through untouched. |
+| `context` | The `${{ }}` variables the template needs — each one either resolved or asked of the operator. |
+| `sets` | `TASK.BLOCK.KEY=value` overrides on top of the template. |
+| `dags` | Each DAG file with its workflow name and eLog trigger (`START_OF_RUN`, `END_OF_RUN`, `MANUAL`, `RUN_PARAM_IS_VALUE:<name>:<value>`). |
+| `lute` | `release: <version>` — in production, pip `lute-lcls`, venvs are built. Or `source: <repo>@<branch>` — not in production, clone and build that branch; no venvs. |
+| `validate` | Optional command; non-zero exit means the rendered config must not be installed. |
+| `unreviewed` | Every parameter left at a default, with the default used. |
+| `parse` | Command per output log. Prints JSON facts, never a verdict. |
+
+Unknown values are not blockers: use the template default and list it under
+`unreviewed`.
 
 ---
 

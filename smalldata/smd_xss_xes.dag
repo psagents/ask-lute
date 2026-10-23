@@ -1,0 +1,33 @@
+!LUTE_DAG
+# One SmallData production feeding both analyzers, on runs whose run_type is DATA.
+# Two separate workflows would produce the same HDF5 twice.
+# hutch-lute dags fills in --account/--partition.
+- !branch_daq2
+  daq2:
+    task_name: "SmallDataProducer2"
+    slurm_params: "--nodes=4 --ntasks-per-node=50 --exclusive"
+    next:
+    - !run_type
+      DATA:
+        task_name: "SmallDataXSSAnalyzer"
+        slurm_params: "--nodes=1 --ntasks-per-node=60"
+        next: []
+    - !run_type
+      DATA:
+        task_name: "SmallDataXESAnalyzer"
+        slurm_params: "--nodes=1 --ntasks-per-node=60"
+        next: []
+  daq1:
+    task_name: "SmallDataProducer"
+    slurm_params: "--nodes=4 --ntasks-per-node=50 --exclusive"
+    next:
+    - !run_type
+      DATA:
+        task_name: "SmallDataXSSAnalyzer"
+        slurm_params: "--nodes=1 --ntasks-per-node=60"
+        next: []
+    - !run_type
+      DATA:
+        task_name: "SmallDataXESAnalyzer"
+        slurm_params: "--nodes=1 --ntasks-per-node=60"
+        next: []

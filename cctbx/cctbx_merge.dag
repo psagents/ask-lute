@@ -1,0 +1,8 @@
+!LUTE_DAG
+# Merge every run of the tag/sample named in MergeCCTBXXFEL.phil_parameters.
+# input_path resolves from lute.db at parse time, one entry per Scale-COMPLETED run.
+# hutch-lute dags fills in --account/--partition.
+- task_name: "CCTBXMerger"
+  run_dependent: false
+  slurm_params: "--ntasks-per-node=60 --nodes=1 --cpus-per-task=1"
+  next: []
