@@ -50,7 +50,13 @@ The template's `merge_version` context puts each merge in
 `{{ work_dir }}/merge_<tag>/<vNNN>/` so iterations never overwrite each other; that
 directory must exist before the merge job starts.
 
-## Context
+## Walk the operator through
+
+Required: every row marked *blocker: ask* below, in one message — `tag`/`selector`
+(tag or sample?), `detector_address` (check `hutch-data detectors`), `pdb_file`,
+`geometry_file`, `mask_file` (absolute paths that exist). Then show `d_min`,
+`merge_version` and the spectrometer calibration with their defaults, once. No
+`defaults/` file: the pipeline is per experiment.
 
 | Variable | Source | If unknown |
 |---|---|---|

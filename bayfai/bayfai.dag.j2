@@ -1,0 +1,16 @@
+!LUTE_DAG
+# BayFAI geometry calibration on a calibrant run: SmallData accumulates the powder
+# (calib_max), BayFAI fits the rings. hutch-lute dags adds account/partition/reservation.
+$% if daq == "lcls2" %
+task_name: "SmallDataProducer2"
+slurm_params: "${{ slurm.smd }}"
+next:
+- task_name: "BayFAIOptimizer2"
+$% else %
+task_name: "SmallDataProducer"
+slurm_params: "${{ slurm.smd }}"
+next:
+- task_name: "BayFAIOptimizer"
+$% endif %
+  slurm_params: "${{ slurm.bayfai }}"
+  next: []

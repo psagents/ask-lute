@@ -1,0 +1,43 @@
+# BayFAI search defaults for MFX (jungfrau). Render context for bayfai.yaml.j2 and
+# bayfai.dag.j2. Every value here is shown to the operator before rendering.
+# Source: mfx101941027, run 25, LaB6 -- D = 142.62 mm in 16 min (job 41716793).
+
+# Spread dist over MPI ranks as a sliding window. Without it every rank runs the
+# same full search, differing only by seed.
+parallelized: dist
+
+# Tilts fixed for the first pass. With rot1/rot2 free the per-rank Cartesian grid is
+# 5-D: 151 M points, ~19 GB per rank, out of memory on 119 ranks. Free them only for
+# a refinement pass in a tight window.
+fixed: [rot1, rot2, rot3]
+
+# Offsets around center (metres, radians).
+bounds:
+  dist: [-0.05, 0.05]
+  poni1: [-0.005, 0.005]
+  poni2: [-0.005, 0.005]
+  rot1: [-0.1, 0.1]
+  rot2: [-0.1, 0.1]
+  rot3: [-0.1, 0.1]
+
+# Replaces the model dict whole, so all six keys. poni at the model's 0.0001 m makes a
+# 1,050,804-row grid that gp.predict scans every iteration: never finished. 0.0005 m:
+# 44,541 rows, same distance to 0.02 mm.
+resolutions:
+  dist: 0.001
+  poni1: 0.0005
+  poni2: 0.0005
+  rot1: 0.02
+  rot2: 0.02
+  rot3: 0.02
+
+# Beam centre and tilts to start from; center.dist is the operator's `dist`.
+center: {poni1: 0.0, poni2: 0.0, rot1: 0.0, rot2: 0.0, rot3: 0.0}
+
+detname_hint: jungfrau
+
+# Per DAG step. SmallData on 4 nodes is write-bound, not CPU-bound; BayFAI keeps one
+# rank for LUTE, so 64 gives 63 search ranks.
+slurm:
+  smd: "--nodes=4 --ntasks-per-node=50 --exclusive"
+  bayfai: "--nodes=1 --ntasks-per-node=64"

@@ -12,12 +12,13 @@ photon counting, which PVs exist): **`@ask-smalldata`**, required.
 | Field | Value |
 |---|---|
 | `template` | `smalldata/smd.yaml.j2`, with `analyses` = any of `xss`, `xas`, `xes` |
-| `dags` | `smd_xss.dag`, `smd_xas.dag`, `smd_xes.dag`, or `smd_xss_xes.dag` for XSS+XES — workflow named after the file, trigger `END_OF_RUN` |
+| `dags` | `smalldata/smd.dag.j2`, same context — workflow `smd_<analyses joined by _>` (e.g. `smd_xss_xes`), trigger `END_OF_RUN` |
+| `defaults` | `smalldata/defaults/<hutch>.yaml`, else `default.yaml` |
 | `lute` | `release: <current lute-lcls>` |
 | `validate` | — |
 | `parse` | `python3 smalldata/parse_smd_output.py --log <.out> --h5 <run.h5> --analysis <xss\|xas\|xes> --det <alias> [--ipm-var V] [--scan-var V]` |
 
-Every DAG runs the producer on every run and the analyzer only when the eLog
+The DAG runs the producer on every run and the analyzer only when the eLog
 `run_type` is `DATA` (`!run_type`), so DARK and calibrant runs are reduced but not
 analyzed. One workflow per experiment: two would produce the same HDF5 twice.
 
@@ -46,23 +47,30 @@ Read off `lute/tasks/_smalldata.py`, not inferred:
 - **PVs** (`epicsArchFilePV`, e.g. spectrometer crystal positions, a CCM readback)
   must be saved by this run's producer. They cannot be added after the run.
 
-## Context
+## Walk the operator through
 
-| Variable | Source | If unknown |
+**Required — ask all in one message, render nothing without them:**
+
+| Variable | Ask as | Check |
 |---|---|---|
-| `experiment`, `work_dir`, `date`, `lute_version` | caller | — |
-| `smalldata_tools` | the experiment's `smalldata_tools` checkout | ask |
-| `smd_dir` | SmallData HDF5 output directory | `/sdf/data/lcls/ds/<hutch>/<exp>/hdf5/smalldata` |
-| `xss_det` / `xas_det` / `xes_det` | `run.detnames` — never a colloquial name | blocker: ask |
-| `poni_file` | `bayfai` output | ask; else switch to `getAzIntParams` |
-| `xas_roi`, `xes_roi` | `[[row0, row1], [col0, col1]]` from a test image | blocker: ask |
-| `ipm_var` | an HDF5 dataset path, e.g. `ipm_dg2/sum` | ask; check it with `parse_smd_output.py` on a test run |
-| `ccm` (XAS) | the CCM readback PV, also listed in `epics_pvs` | blocker: ask |
-| `scan_var` | the scanned motor, e.g. `lxt` | omit — no binning |
-| `epics_pvs` | `@ask-smalldata` / instrument scientist | omit |
+| `analyses` | "Which analyses: XSS, XAS, XES?" | — |
+| `xss_det` / `xas_det` / `xes_det` | "Which detector records the scattering / XAS / XES signal?" | in `hutch-data detectors` for a recent run — never a colloquial name (`epix_0_0` was `epix100_0`) |
+| `xas_roi`, `xes_roi` | "ROI as `[[row0, row1], [col0, col1]]`?" | inside the detector shape; a full-detector XES ROI is large (704×768 float64 per event) |
+| `ipm_var` | "Which beam-intensity monitor?" | an HDF5 **field** (`MfxDg1BmMon/totalIntensityJoules`), not a happi prefix (`MFX:DG1:IPM`); read its range on a test run before picking a cut |
+| `ccm` (XAS) | "CCM readback PV?" | also listed in `epics_pvs` |
+| `poni_file` (XSS) | "Geometry from a BayFAI run?" | exists; else `getAzIntParams` with `eBeam`, `center`, `dis_to_sam` by hand |
+| T-jump delays (XSS) | "How are pump-probe delays encoded — a scan motor, or event codes?" | event codes per delay, or bits (needs the LUTE PR for `xss_delay_bits`) |
+| `smalldata_tools` | "Which smalldata_tools checkout?" | has `<daq>_producers/smd_producer.py` |
 
-`producer` and `lute_template_cfg` are set explicitly in the template because a pip
-venv (`lute: release`) has no psana to auto-detect them.
+**Optional — ask once, omit if no answer:** `scan_var` (the scanned motor; must be in
+the run's `scan/` group, else the analyzer silently bins by event), `epics_pvs`
+(`@ask-smalldata` / instrument scientist; cannot be added after the run).
+
+**Resolved, not asked:** `experiment`, `work_dir`, `date`, `lute_version`, `hutch`
+(caller); `daq` (`.xtc2` on disk → `lcls2`); `smd_dir` (default
+`/sdf/data/lcls/ds/<hutch>/<exp>/hdf5/smalldata`).
+
+**Defaults to review** (`defaults/<hutch>.yaml`): `slurm.smd`, `slurm.analyzer`.
 
 ## Reading the result
 

@@ -41,16 +41,29 @@ can feed them straight to `hutch-lute render / plan / all`:
 | Field | Meaning |
 |---|---|
 | `template` | Path to one config template. `${{ var }}` is filled at render time; LUTE's own `{{ work_dir }}` / `{{ run:04d }}` pass through untouched. |
-| `context` | The `${{ }}` variables the template needs — each one either resolved or asked of the operator. |
+| `context` | The `${{ }}` variables the template needs: the sub-skill's `defaults` file (`--context`) plus the operator's answers and resolved values (`--set-context`). |
+| `defaults` | `<sub-skill>/defaults/<hutch>.yaml`, else `default.yaml` where the sub-skill has one: the per-hutch knowledge as data, each value with its reason. |
 | `sets` | `TASK.BLOCK.KEY=value` overrides on top of the template. |
-| `dags` | Each DAG file with its workflow name and eLog trigger (`START_OF_RUN`, `END_OF_RUN`, `MANUAL`, `RUN_PARAM_IS_VALUE:<name>:<value>`). |
-| `lute` | `release: <version>` — in production, pip `lute-lcls`, venvs are built. Or `source: <repo>@<branch>` — not in production, clone and build that branch; no venvs. |
+| `dags` | Each DAG with its workflow name and eLog trigger (`START_OF_RUN`, `END_OF_RUN`, `MANUAL`, `RUN_PARAM_IS_VALUE:<name>:<value>`). A `.dag.j2` is rendered with the same context (`hutch-lute render --no-whitelist`); a `.dag` is copied. |
+| `lute` | `release: <version>` — in production; runs from the central build `/sdf/group/lcls/ds/tools/lute/<version>` (`dev` = lute-lcls 0.4.0+dev), pip venvs only if there is none. Or `source: <repo>@<branch>` — not in production, clone and build that branch (needs internet: not from a hutch host). |
 | `validate` | Optional command; non-zero exit means the rendered config must not be installed. |
 | `unreviewed` | Every parameter left at a default, with the default used. |
 | `parse` | Command per output log. Prints JSON facts, never a verdict. |
 
-Unknown values are not blockers: use the template default and list it under
-`unreviewed`.
+### Walk the operator through — every sub-skill, before rendering
+
+Each sub-skill's *Walk the operator through* section lists what to ask. Do it as **one
+exchange**, not an interview:
+
+1. **Required.** Ask every required value in one message, each with the check beside
+   it (run it before rendering). Render nothing until they are answered.
+2. **Defaults.** Show the `defaults` file's values in one table, each with its comment,
+   and ask once: keep, or change which?
+3. **Unreviewed.** Whatever the operator did not look at — optional values left out,
+   defaults on a hutch that has only `default.yaml` — goes in `unreviewed`.
+
+That one exchange is the whole review: it is not a reason to resolve more facts before
+submitting. A value the operator does not know is listed as unreviewed, not chased.
 
 ---
 

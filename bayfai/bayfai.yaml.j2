@@ -9,34 +9,31 @@ task_timeout: 3600
 work_dir: ${{ work_dir }}
 ---
 SubmitSMD:
-  # Explicit because pip venvs (lute: release) carry no psana to auto-detect these.
-  producer: "${{ smalldata_tools }}/lcls2_producers/smd_producer.py"
+  # Explicit because a venv (central or pip) carries no psana to auto-detect the DAQ.
+  producer: "${{ smalldata_tools }}/${{ daq }}_producers/smd_producer.py"
   lute_template_cfg:
-    template_name: "smd2_prod_config_template.py"
-    output_path: "{{ work_dir }}/smalldata_tools/prod_config_bayfai.py"
+    template_name: "smd${{ daq[-1] }}_prod_config_template.py"
+    # smd_producer.py imports prod_config_<hutch>.py from its own directory; a config
+    # written anywhere else is never read, and the repo default runs instead.
+    output_path: "${{ smalldata_tools }}/${{ daq }}_producers/prod_config_${{ hutch }}.py"
   # Kept apart from the experiment's main SmallData output, which this would overwrite.
   directory: "{{ work_dir }}/smd_output"
   producer_parameters:
+    detnames: ${{ (quads | map(attribute='detname') | list if quads is defined else [detname]) | tojson }}
     detSumAlgos:
       # calib_max, not calib: rings stand out in a max-projection, not a sum.
-      ${{ detname }}:
+      all:
         - "calib_max"
 
+{## Values from defaults/<hutch>.yaml, reviewed with the operator. No bayfai_params
+    (bo_params before 0.4.0): the model's own defaults apply, whatever the version calls it. ##}
 BayFAI:
   detname: "${{ detname }}"
   calibrant: "${{ calibrant }}"
-  center:
-    dist: ${{ dist }}
-    poni1: 0.0
-    poni2: 0.0
-    rot1: 0.0
-    rot2: 0.0
-    rot3: 0.0
-  bounds:
-    dist: [-0.05, 0.05]
-    poni1: [-0.005, 0.005]
-    poni2: [-0.005, 0.005]
-    rot1: [-0.1, 0.1]
-    rot2: [-0.1, 0.1]
-    rot3: [-0.1, 0.1]
-  bo_params: {}
+$% if parallelized is defined %
+  parallelized: "${{ parallelized }}"
+$% endif %
+  fixed: ${{ fixed | tojson }}
+  center: ${{ dict(center, dist=dist | float) | tojson }}
+  bounds: ${{ bounds | tojson }}
+  resolutions: ${{ resolutions | tojson }}

@@ -9,11 +9,13 @@ task_timeout: 3600
 work_dir: ${{ work_dir }}
 ---
 SubmitSMD:
-  # Explicit because pip venvs (lute: release) carry no psana to auto-detect these.
-  producer: "${{ smalldata_tools }}/lcls2_producers/smd_producer.py"
+  # Explicit because a venv (central or pip) carries no psana to auto-detect the DAQ.
+  producer: "${{ smalldata_tools }}/${{ daq }}_producers/smd_producer.py"
   lute_template_cfg:
-    template_name: "smd2_prod_config_template.py"
-    output_path: "{{ work_dir }}/smalldata_tools/prod_config.py"
+    template_name: "smd${{ daq[-1] }}_prod_config_template.py"
+    # smd_producer.py imports prod_config_<hutch>.py from its own directory; a config
+    # written anywhere else is never read, and the repo default runs instead.
+    output_path: "${{ smalldata_tools }}/${{ daq }}_producers/prod_config_${{ hutch }}.py"
   directory: "${{ smd_dir }}"
   producer_parameters:
 $% if 'xss' in analyses %

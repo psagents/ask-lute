@@ -1,0 +1,53 @@
+# BayFAI search defaults for MEC: four Epix10ka quads, fitted independently in one
+# !param_sweep (bayfai_mec.dag.j2). Render context for bayfai.yaml.j2 and that DAG.
+# Source: LUTE dev config/mec.yaml and workflows/common/bayfai_mec.dag (2026-10).
+
+# Base config. Each quad below overrides detname, fixed, center and bayfai_params.
+# No `parallelized`: a quad's tilt is free, so ranks share one search space.
+fixed: [rot1, rot3]
+
+bounds:
+  dist: [-0.01, 0.01]
+  poni1: [-0.01, 0.01]
+  poni2: [-0.01, 0.01]
+  rot1: [-0.1, 0.1]
+  rot2: [-0.1, 0.1]
+  rot3: [-0.1, 0.1]
+
+# Replaces the model dict whole, so all six keys. Coarse poni keeps the grid small.
+resolutions:
+  dist: 0.001
+  poni1: 0.0005
+  poni2: 0.0005
+  rot1: 0.01
+  rot2: 0.01
+  rot3: 0.01
+
+center: {poni1: 0.06, poni2: 0.06, rot1: 0.0, rot2: -0.6, rot3: 0.0}
+
+detname_hint: Epix10kaQuad0
+
+# Each quad sits at its own distance and tilt; the free tilt is the one the quad's
+# placement leaves unconstrained. These centres are positions, not just guesses:
+# re-check them with the instrument scientist if the quads were moved.
+quads:
+  - detname: Epix10kaQuad0
+    fixed: [rot1, rot3]
+    center: {dist: 0.27, poni1: 0.06, poni2: 0.06, rot1: 0.0, rot2: -0.6, rot3: 0.0}
+    bayfai_params: {max_rings: 6}
+  - detname: Epix10kaQuad1
+    fixed: [rot1, rot3]
+    center: {dist: 0.27, poni1: 0.08, poni2: -0.04, rot1: 0.0, rot2: -0.6, rot3: 0.0}
+    bayfai_params: {max_rings: 6}
+  - detname: Epix10kaQuad2
+    fixed: [rot2, rot3]
+    center: {dist: 0.2, poni1: -0.01, poni2: 0.0, rot1: 1.1, rot2: 0.0, rot3: 0.0}
+    bayfai_params: {max_rings: 10}
+  - detname: Epix10kaQuad3
+    fixed: [rot2, rot3]
+    center: {dist: 0.1, poni1: -0.01, poni2: 0.04, rot1: -0.4, rot2: 0.0, rot3: 0.0}
+    bayfai_params: {max_rings: 10}
+
+slurm:
+  smd: "--nodes=4 --ntasks-per-node=50 --exclusive"
+  bayfai: "--nodes=1 --ntasks-per-node=64"
