@@ -7,7 +7,7 @@ description: >
   the template, DAGs, trigger, LUTE install and output-log parser a caller needs.
   Triggers on: set up lute, lute config, lute yaml, lute dag, workflow, trigger,
   managed task, executor, result passing, in_file out_file, lute database, task
-  creation, lute slurm, run_type branching, lute versioning, bayfai, geometry
+  creation, lute slurm, run_type branching, RUN_GROUPS, lute versioning, bayfai, geometry
   calibration, AgBh, smalldata, SubmitSMD, XSS, XAS, XES, azimuthal integration,
   cctbx, cctbx.xfel, IndexCCTBXXFEL, ScaleCCTBXXFEL, MergeCCTBXXFEL, SFX
   pipeline, d_min, Xtc1Reader, Xtc2Writer, XTC conversion.
@@ -121,7 +121,7 @@ has drifted.
 
 | Topic | Reference file |
 |---|---|
-| **YAML config** — parameter models, variable substitution, two-document structure | `references/lute-configuration.md` |
+| **YAML config** — parameter models, variable substitution, two-document structure, `RUN_GROUPS` per-run policies (0.4.0+dev) | `references/lute-configuration.md` |
 | **Result passing** — in_file/out_file, database chaining, `smd_path` auto-population | `references/result-passing.md` |
 | **Workflow / DAG** — DAG YAML syntax, `!branch_daq2`, `!run_type` branching, Airflow, Maestro, tasklets | `references/workflow-creation.md` |
 | **SLURM submission** — environment setup, psana, Kerberos, running LUTE | `references/slurm-submission.md` |

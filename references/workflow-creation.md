@@ -24,13 +24,14 @@
 
 ## Overview
 
-LUTE workflows are DAGs that chain ManagedTasks together. Two orchestration backends
-are supported:
+LUTE workflows are DAGs that chain ManagedTasks together. Orchestration backends
+(`workflows/`):
 
 - **Airflow** — tasks become Airflow operators; the DAG is defined in Python
-- **Maestro** — tasks are described in a Maestro step file (YAML-based)
+- **Maestro** — tasks are described in a Maestro step file (YAML-based); `launch_slurm`
+- **Prefect** — `workflows/prefect/`, launched with `launch_prefect`
 
-Both backends rely on `lute/execution/launch.py` to submit tasks to the batch system.
+All backends rely on `lute/execution/launch.py` to submit tasks to the batch system.
 
 ---
 
@@ -116,8 +117,8 @@ When creating workflows, **always verify names in `managed_tasks.py`**, but here
 | `CCTBXMerger` | `MergeCCTBXXFEL` | CCTBX merging |
 | `SmallDataProducer` | `SubmitSMD` | LCLS-I smalldata production |
 | `SmallDataProducer2` | `SubmitSMD` | LCLS-II smalldata production (psana2) |
-| `BayFAIOptimizer` | `OptimizeBayFAI` | BayFAI geometry optimization (psana1) |
-| `BayFAIOptimizer2` | `OptimizeBayFAI` | BayFAI geometry optimization (psana2) |
+| `BayFAIOptimizer` | `BayFAI` | BayFAI geometry optimization (psana1) |
+| `BayFAIOptimizer2` | `BayFAI` | BayFAI geometry optimization (psana2) |
 | `Xtc1Reader` | `ReadXtc1` | XTC1→XTC2 conversion reader (new in v0.3.0) |
 | `Xtc2Writer` | `WriteXtc2` | XTC1→XTC2 conversion writer (new in v0.3.0) |
 

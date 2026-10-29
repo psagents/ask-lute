@@ -16,6 +16,10 @@ task_timeout: 600
 work_dir: ""
 ---
 # ManagedTask: BayFAIOptimizer / BayFAIOptimizer2 (MPIExecutor)
+# VERSION: this template is the v0.3.0 (latest release) parameter set. On dev /
+# 0.4.0+dev, `bo_params` was renamed `bayfai_params` and `powder`, `in_file` and
+# `preprocess` were removed (psana/psana2 unified via LCLSGeom). For dev installs
+# use the `bayfai/` sub-skill templates instead.
 # Optimizes LCLS detector geometry using PyFAI coupled with Bayesian Optimization.
 # BayFAIOptimizer is for LCLS1 data.
 # BayFAIOptimizer2 targets LCLS2 data and sets extra environment variables (PS_SRV_NODES, PS_EB_NODES).

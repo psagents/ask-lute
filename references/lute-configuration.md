@@ -75,6 +75,55 @@ MyTask:
 
 ---
 
+## `RUN_GROUPS` — per-run parameter policies (0.4.0+dev, not in v0.3.0)
+
+Only on `dev` / the `v0.4.0+dev` nightly (PRs #145, #150). Docs:
+`https://slac-lcls.github.io/lute/dev/usage/configuration/` (§`RUN_GROUPS`).
+Parser: `resolve_run_group_directives()` in `lute/io/config.py`.
+
+Label sets of runs **globally** (header document), then set **per-Task
+policies** for each label:
+
+```yaml
+%YAML 1.3
+---
+experiment: "MYEXP123"
+run: "{{ $RUN }}"
+work_dir: "/path/to/work_dir"
+RUN_GROUPS:
+  SAMPLE1:
+    applies_to:
+      range: [0, 40]          # inclusive
+  SAMPLE2:
+    applies_to:
+      runs: [4, 13, 50]       # explicit list
+...
+---
+SubmitSMD:
+  RUN_GROUPS:
+    SAMPLE1:
+      default: @db:current                          # all params of this Task
+      producer_parameters.getROIs.jungfrau: @db:run:10   # dot path into nesting
+    SAMPLE2:
+      producer_parameters: @literal
+  producer_parameters: { ... }   # literal values = final fallback
+...
+```
+
+| Directive | Value used |
+|---|---|
+| `@db:current` | Latest value stored in `lute.db` **for the run being processed** (reprocess with the old parameters) |
+| `@db:run:NNN` | Latest value stored for **run NNN**, whatever run is being processed |
+| `@literal` | The YAML value as written — also the fallback when no DB entry exists |
+
+Conflict rules: a Task sees the union of global and Task-level groups (a group
+defined only under one Task is invisible to others — define ranges globally);
+Task-level ranges and default policies override global ones; for a run in
+several groups the more specific wins (list beats range, narrower range beats
+wider). Dot paths reach nested dicts but **not list items** — a list is
+replaced whole. Directives may be unquoted (custom SafeLoader). Parameter
+sweeps also go through `RUN_GROUPS` resolution (#150).
+
 ## TaskParameters model (Pydantic)
 
 Each task has a corresponding `<Name>Parameters` class in `lute/io/models/<name>.py`:

@@ -100,6 +100,7 @@ Setup and runtime — not caught:
 | Indexing in P1 | far more lattice candidates per still; ranks OOM at rank counts safe with known symmetry |
 | Kerberos expired | eLog tag/sample resolution returns nothing: `kinit -c FILE:$HOME/krb5cc.ticket` |
 | Explicit `--mem` in `slurm_params` | not needed; known-good runs use the default |
+| Indexer exits 127 within seconds: `srun returned non-zero exit status (36096) from launching the per-node daemon` | allocation mixed RHEL 8.10 and 9.6 nodes. The DAGs pin `--constraint=OS_VER:9.6` (all nodes of a job must share one OS). Keep 9.6 — do not switch to 8.10 for free-node counts: some 8.10-labelled nodes actually run 9.6, so 8.10 can still mix (check with `srun -w NODE -n1 -t 1 cat /etc/redhat-release`). An indexer killed at launch shows as PENDING in the watcher — check `sacct`. LUTE dev's own fix covers only its tests and Airflow |
 | `radial_average_two_theta_*` | 12.5–22.8° is calibrated for MFX Jungfrau; other detectors/energies need their own range |
 
 ## Reading the result
