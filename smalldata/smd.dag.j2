@@ -1,18 +1,24 @@
 !LUTE_DAG
 # SmallData on every run; each analyzer in `analyses` only on runs whose run_type is
 # DATA. One producer feeds them all: two workflows would write the same HDF5 twice.
+# `droplets` is producer-only (no analyzer Task), so it adds no step here.
 # hutch-lute dags adds account/partition/reservation.
 - !branch_daq2
 $% for daq, producer in (("daq2", "SmallDataProducer2"), ("daq1", "SmallDataProducer")) %
   ${{ daq }}:
     task_name: "${{ producer }}"
     slurm_params: "${{ slurm.smd }}"
+$% set analyzers = analyses | reject('equalto', 'droplets') | list %
+$% if analyzers %
     next:
-$% for a in analyses %
+$% for a in analyzers %
     - !run_type
       DATA:
         task_name: "SmallData${{ a | upper }}Analyzer"
         slurm_params: "${{ slurm.analyzer }}"
         next: []
 $% endfor %
+$% else %
+    next: []
+$% endif %
 $% endfor %

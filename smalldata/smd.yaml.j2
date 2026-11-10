@@ -19,7 +19,14 @@ SubmitSMD:
     # written anywhere else is never read, and the repo default runs instead.
     output_path: "{{ work_dir }}/smalldata_tools/${{ daq }}_producers/prod_config_${{ hutch }}.py"
   directory: "${{ smd_dir }}"
+$% if nevents %
+  # Smoke test only: a short run into a scratch smd_dir before registering.
+  nevents: ${{ nevents }}
+$% endif %
   producer_parameters:
+    # Always set: the LCLS-I template renders `detnames = {{ detnames }}` unconditionally,
+    # and an unset value writes `detnames = ` -- a SyntaxError on import.
+    detnames: ${{ ([xss_det, xas_det, xes_det, droplet_det] | select | unique | list) | tojson }}
 $% if 'xss' in analyses %
     # XSSAnalyzer reads <det>/pyfai_azav, so q units are required, not 2th_deg.
     getAzIntPyFAIParams:
@@ -42,6 +49,21 @@ $% if 'xes' in analyses %
         - ROI: ${{ xes_roi }}
           writeArea: true
 $% endif %
+$% endif %
+$% if 'droplets' in analyses %
+    # Sparse droplets: per-event var_droplet_sparse/{data,row,col,npix} under <det>/.
+    # Thresholds are in calib units -- keV for a detector whose gain constants are
+    # 1/(ADU/keV); see the calibration-units trap in SKILL.md before using useRms.
+    getDropletParams:
+      ${{ droplet_det }}:
+        threshold: ${{ droplet_threshold }}
+        thresholdLow: ${{ droplet_threshold_low | default(droplet_threshold, true) }}
+        thresADU: ${{ droplet_thresADU }}
+        useRms: ${{ droplet_use_rms | default(false) | tojson }}
+        # Variable-length output. The model default 1e5 writes five fixed
+        # 100 000-wide arrays per event (~4 MB/event).
+        nData: null
+        relabel: true
 $% endif %
 $% if epics_pvs %
     # PVs not saved here cannot be recovered after the run.
