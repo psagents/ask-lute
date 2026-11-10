@@ -88,7 +88,36 @@ the run's `scan/` group, else the analyzer silently bins by event), `epics_pvs`
 `smd.patch` on its first run (`clone_smalldata` tasklet). It skips the clone if that
 directory exists, so a custom fork goes there before the first run.
 
-**Defaults to review** (`defaults/<hutch>.yaml`): `slurm.smd`, `slurm.analyzer`.
+**Defaults to review** (`defaults/<hutch>.yaml`): `slurm.smd`, `slurm.analyzer`, and
+for droplets the per-detector `droplets` thresholds and `calib_units` where the file
+has them. A hutch on `default.yaml` has every droplet value unreviewed: say so.
+
+## What to know when setting it up
+
+### Calibration units
+
+**`useRms: true` assumes calib is in ADU.** `dropletFunc` cuts at
+`threshold × rms / gain` (`ana_funcs/droplet.py`, `setFromDet`). When a detector's gain
+constants are 1/(ADU/keV), psana's `calib` is already in keV and that product is in
+ADU²/keV: on cxi101933627 run 94 (`epix100_1`, gain 0.0597, rms 2.8) a "5σ" cut sat at
+~235 keV, and **every event had zero droplets with no error anywhere**. Resolve the
+units before rendering (*Walk the operator through*), and on a keV detector use
+`useRms: false` with thresholds in keV — there, 5σ = 5 × 0.17 = 0.85 keV.
+
+### Traps
+
+| Trap | What happens | Do |
+|---|---|---|
+| LUTE's `nData` default (`1e5`) | five fixed 100 000-wide arrays per event, ~4 MB/event | `nData: null` (the template sets it) — variable-length `var_droplet_sparse/` |
+| `detnames` unset, LCLS-I | `smd1_prod_config_template.py` renders `detnames = ` → `SyntaxError` when the producer imports `prod_config_<hutch>.py` (cxi101933627, first smoke test) | the template always sets it |
+| `userMask` under `getDropletParams` | rendered into the config, but `dropletFunc` reads `mask` (from `det.mask`), so it has **no effect** | mask through the detector's calib status mask, or AND a mask into `det.mask` in the workspace's `smd_producer.py`. Upstream bug: drop the workaround when fixed |
+| two first runs at once | both `mkdir` a new `directory`; one dies with `FileExistsError` (cxi101933627, backfilling runs 72 and 73 together) | create `directory` before registering, or launch the first run alone. Upstream: `exist_ok=True` |
+| LUTE v0.3.0 | its `smd1` template emits `getDropletParams()` / `getDroplet2Photons()`; the current producer only calls `get_droplet()` / `get_droplet2photon()` — droplets silently not produced | `release: dev` |
+| `getDroplet2Photons` on dev | the template returns a dict where the producer iterates a list, and puts `nData` where `droplet2Photons` ignores it | do not use it until fixed; histogram `var_droplet_sparse/data` instead |
+| a hot pixel | a droplet at the same `(row, col)` in ~100 % of events, often far above one photon | `top_repeat_fraction` ≈ 1 in `parse`; mask it, then re-check |
+| a quiet run | a few droplets per event and no photon peak — looks like a threshold problem and is not | read the histogram on the run the operator names as representative |
+| file size | scales with hit density: 2.8 and 8.4 GB for two 36 k-event runs (cxi101933627 runs 73/72). `tile` is always 0 on a single-panel detector and is 1/5 of it | budget disk per run before registering on `END_OF_RUN` |
+| photon pile-up | at 10⁴ droplets per frame neighbouring photons merge; 2- and 3-photon peaks appear at 2× and 3× | a physics cut, not a config fix — say so when reporting counts |
 
 ## Reading the result
 
