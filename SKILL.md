@@ -47,8 +47,31 @@ can feed them straight to `hutch-lute render / plan / all`:
 | `dags` | Each DAG with its workflow name and eLog trigger (`START_OF_RUN`, `END_OF_RUN`, `MANUAL`, `RUN_PARAM_IS_VALUE:<name>:<value>`). A `.dag.j2` is rendered with the same context (`hutch-lute render --no-whitelist`); a `.dag` is copied. |
 | `lute` | `release: <version>` — in production; runs from the central build `/sdf/group/lcls/ds/tools/lute/<version>` (`dev` = lute-lcls 0.4.0+dev), pip venvs only if there is none. Or `source: <repo>@<branch>` — not in production, clone and build that branch (needs internet: not from a hutch host). |
 | `validate` | Optional command; non-zero exit means the rendered config must not be installed. |
+| `smoke` | Optional. The same template rendered with `nevents` small (100) and its output directory in scratch, submitted as one Task on a run the operator names, then read with `parse` — **before** registering. It catches what only shows at run time (wrong units, a config that fails to import) in minutes, without writing into the experiment's real output. |
 | `unreviewed` | Every parameter left at a default, with the default used. |
 | `parse` | Command per output log. Prints JSON facts, never a verdict. |
+
+### `daq` — resolve it first
+
+Every sub-skill branches on `daq`, and LCLS-I and LCLS-II differ in almost every path.
+Resolve it from the run's files before anything else, and pass it to the caller:
+
+- `.xtc2` in `xtc/` → `lcls2`
+- `.xtc` only → `lcls1`
+- neither (no run yet) → ask
+
+| | `lcls2` | `lcls1` |
+|---|---|---|
+| SmallData producer Task | `SmallDataProducer2` | `SmallDataProducer` |
+| producer, templates | `lcls2_producers/`, `smd2_prod_config_template.py` | `lcls1_producers/`, `smd1_prod_config_template.py` |
+| BayFAI Task | `BayFAIOptimizer2` | `BayFAIOptimizer` |
+| `submit_slurm` | `--psana2` | `--psana1` |
+| psconda | `conda2/manage/bin/psconda.sh` | `conda1/manage/bin/psconda.sh` |
+| detector names | `psana2` `run.detnames` | `detnames exp=<E>:run=<R>` (psana1) |
+| SmallData `detnames` | optional | **required** (else the rendered config does not import) |
+
+A DAG with `!branch_daq2` takes the right branch at run time on its own; the config
+template does not, so `daq` must be known to render it.
 
 ### Walk the operator through — every sub-skill, before rendering
 
@@ -110,6 +133,8 @@ file from the LUTE the user actually runs before giving a definitive answer:
 | Workflow backends and shipped DAGs | `workflows/` directory listing |
 | Rendered PHIL templates (CCTBX) | `config/templates/cctbx_*.phil` |
 | Released versions | `https://api.github.com/repos/slac-lcls/lute/tags` |
+| SmallData producer hooks (`get_droplet`, `getROIs`, …) and per-detector common mode | `slac-lcls/smalldata_tools`: `lcls1_producers/smd_producer.py`, `lcls2_producers/smd_producer.py` — a separate repo; the copy that runs is the one cloned into `{{ work_dir }}/smalldata_tools` |
+| A SmallData analysis function's kwargs | `smalldata_tools/ana_funcs/*.py` (e.g. `droplet.py`) |
 
 If a fetched source disagrees with a reference file, trust the source, tell the user,
 and suggest running `python3 -I scripts/check_upstream.py` to see what else

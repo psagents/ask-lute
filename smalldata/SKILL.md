@@ -19,6 +19,7 @@ photon counting, which PVs exist): **`@ask-smalldata`**, required.
 | `defaults` | `smalldata/defaults/<hutch>.yaml`, else `default.yaml` |
 | `lute` | `release: dev` (`central:dev`, lute-lcls 0.4.0+dev). Not v0.3.0 for droplets: see traps |
 | `validate` | — |
+| `smoke` | the same template with `--set-context nevents=100 smd_dir=<scratch>/smd_test`, one `SmallDataProducer[2]` Task on the operator's representative run, then `parse` on its `.h5`. Required for `droplets` (units are only visible in the output) |
 | `parse` | `python3 smalldata/parse_smd_output.py --log <.out> --h5 <run.h5> --analysis <xss\|xas\|xes\|droplets> --det <alias> [--ipm-var V] [--scan-var V]` |
 
 The DAG runs the producer on every run and the analyzer only when the eLog
@@ -80,7 +81,8 @@ the run's `scan/` group, else the analyzer silently bins by event), `epics_pvs`
 (`@ask-smalldata` / instrument scientist; cannot be added after the run).
 
 **Resolved, not asked:** `experiment`, `work_dir`, `date`, `lute_version`, `hutch`
-(caller); `daq` (`.xtc2` on disk → `lcls2`); `smd_dir` (default
+(caller); `daq` (`.xtc2` on disk → `lcls2`, `.xtc` only → `lcls1`; see the top-level
+*`daq` — resolve it first*); `smd_dir` (default
 `/sdf/data/lcls/ds/<hutch>/<exp>/hdf5/smalldata`).
 
 **smalldata_tools is not asked or cloned by hand.** `SmallDataProducer` clones

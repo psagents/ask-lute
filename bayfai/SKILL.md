@@ -54,7 +54,8 @@ No `bayfai_params` (`bo_params` before 0.4.0) is written outside MEC's per-quad
 | `dist` | "Expected sample–detector distance **at the current detector z**, in metres?" | no default. Each rank searches `center.dist ± rank × resolution` with initial samples around it; mfx101941027 rendered the old 0.1 m against a true 0.1426 m and most of the budget searched below the answer |
 
 **Resolved, not asked:** `experiment`, `work_dir`, `date`, `lute_version`, `hutch`
-(caller); `daq` (`.xtc2` on disk → `lcls2`).
+(caller); `daq` (`.xtc2` on disk → `lcls2`, `.xtc` only → `lcls1`; see the top-level
+*`daq` — resolve it first*).
 
 **smalldata_tools is not asked or cloned by hand.** `SmallDataProducer` clones
 `slac-lcls/smalldata_tools` into `{{ work_dir }}/smalldata_tools` and applies LUTE's
