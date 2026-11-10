@@ -1,0 +1,23 @@
+# SmallData defaults for CXI. Render context for smd.yaml.j2 and smd.dag.j2, on top of
+# what default.yaml holds. Every value here is shown to the operator before rendering.
+# Source: cxi101933627 (2026-11), LCLS-I DAQ, epix100_1 droplets at 8.9-10.5 keV.
+# `daq` is not set here: it is resolved from the run's files (.xtc -> lcls1).
+
+# Per DAG step. Same as default.yaml; a 36 k-event epix100 droplet run took ~1.5-2 min
+# on 4 nodes, almost all of it startup.
+slurm:
+  smd: "--nodes=4 --ntasks-per-node=50 --exclusive"
+  analyzer: "--nodes=1 --ntasks-per-node=60"
+
+# Droplets on an epix100 at CXI. psana calibrates it to keV (gain constants 0.0597 =
+# 1/16.75 ADU/keV), so thresholds are in keV and useRms must be off: with it on, a
+# "5 sigma" cut lands at ~235 keV and no droplet is ever found (run 94).
+# Re-check median(det.gain) and median(det.rms * det.gain) if the detector or its
+# calibration changes: these values are for epix100_1 as calibrated in 2026-11.
+droplet_use_rms: false
+# 5 sigma of the pixel noise: median(rms * gain) = 0.17 keV on run 94.
+droplet_threshold: 0.85
+droplet_threshold_low: 0.85
+# Minimum droplet sum, keV (= 60 ADU): ~0.4 photon at 8 keV, ~0.2 at 18 keV. Set from the
+# lowest photon energy of the experiment; droplets cut here cannot be recovered.
+droplet_thresADU: 3.6
