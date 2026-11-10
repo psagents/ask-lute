@@ -106,21 +106,37 @@ IndexCrystFEL:
 
 When creating workflows, **always verify names in `managed_tasks.py`**, but here are common examples:
 
-| Managed Task Name | Task Class Name | Purpose |
-|-------------------|-----------------|---------|
-| `PeakFinderSFX` | `FindPeaksSFX` | Bragg peak finding (PyAlgos/Peakfinder8) |
-| `CrystFELIndexer` | `IndexCrystFEL` | CrystFEL indexing |
-| `PartialatorMerger` | `MergePartialator` | CrystFEL merging |
-| `HKLComparer` | `CompareHKL` | Merge statistics |
-| `CCTBXIndexer` | `IndexCCTBXXFEL` | CCTBX indexing |
-| `CCTBXScaler` | `ScaleCCTBXXFEL` | CCTBX scaling-only step (new in v0.3.0) |
-| `CCTBXMerger` | `MergeCCTBXXFEL` | CCTBX merging |
-| `SmallDataProducer` | `SubmitSMD` | LCLS-I smalldata production |
-| `SmallDataProducer2` | `SubmitSMD` | LCLS-II smalldata production (psana2) |
-| `BayFAIOptimizer` | `BayFAI` | BayFAI geometry optimization (psana1) |
-| `BayFAIOptimizer2` | `BayFAI` | BayFAI geometry optimization (psana2) |
-| `Xtc1Reader` | `ReadXtc1` | XTC1→XTC2 conversion reader (new in v0.3.0) |
-| `Xtc2Writer` | `WriteXtc2` | XTC1→XTC2 conversion writer (new in v0.3.0) |
+| Managed Task Name | Task Class Name | Executor | Purpose |
+|-------------------|-----------------|----------|---------|
+| `SmallDataProducer` | `SubmitSMD` | `Executor` | LCLS1 smalldata HDF5 production |
+| `SmallDataProducer2` | `SubmitSMD` | `Executor` | LCLS2 smalldata (psana2/conda2 env) |
+| `SmallDataProducer2Test` | `SubmitSMD` | `Executor` | LCLS2 smalldata (test env) |
+| `SmallDataProducerSpack` | `SubmitSMD` | `Executor` | LCLS2 smalldata (spack env) |
+| `SmallDataProducerXpp` | `SubmitSMD` | `Executor` | LCLS2 smalldata (XPP DRP env) |
+| `SmallDataXSSAnalyzer` | `AnalyzeSmallDataXSS` | `MPIExecutor` | Process XSS scattering from smalldata HDF5 |
+| `SmallDataXASAnalyzer` | `AnalyzeSmallDataXAS` | `MPIExecutor` | Process XAS results from smalldata HDF5 |
+| `SmallDataXESAnalyzer` | `AnalyzeSmallDataXES` | `MPIExecutor` | Process XES results from smalldata HDF5 |
+| `AgBhGeometryOptimizer` | `OptimizeAgBhGeometryExhaustive` | `MPIExecutor` | Grid search for center/distance from Ag Bh run |
+| `CCTBXIndexer` | `IndexCCTBXXFEL` | `Executor` | Crystallographic indexing with cctbx.xfel |
+| `CCTBXScaler` | `ScaleCCTBXXFEL` | `Executor` | CCTBX scaling-only step (new in v0.3.0) |
+| `SMDToNexusConvertor` | `ConvertSMDToNexus` | `Executor` | Convert smalldata HDF5 to NeXus for CCTBX |
+| `CrystFELIndexer` | `IndexCrystFEL` | `Executor` | Crystallographic indexing with CrystFEL |
+| `StreamFileConcatenator` | `ConcatenateStreamFiles` | `Executor` | Concatenate CrystFEL stream files |
+| `CCTBXMerger` | `MergeCCTBXXFEL` | `Executor` | Crystallographic merging with cctbx.xfel |
+| `PartialatorMerger` | `MergePartialator` | `Executor` | Crystallographic merging with CrystFEL partialator |
+| `HKLComparer` | `CompareHKL` | `Executor` | Merge statistics / figures of merit |
+| `HKLManipulator` | `ManipulateHKL` | `Executor` | Format conversions (hkl→mtz, etc.) |
+| `DimpleSolver` | `DimpleSolve` | `Executor` | Molecular replacement with CCP4 DIMPLE |
+| `PeakFinderSFX` | `FindPeaksSFX` | `MPIExecutor` | Bragg peak finding (PyAlgos/Peakfinder8) |
+| `PeakFinderSFXXpp` | `FindPeaksSFX` | `MPIExecutor` | Peak finding (XPP DRP CPU env) |
+| `PeakFinderSFXXppGpu` | `FindPeaksSFX` | `MPIExecutor` | Peak finding (XPP DRP GPU env) |
+| `SHELXCRunner` | `RunSHELXC` | `Executor` | CCP4 SHELXC for crystallographic phasing |
+| `PeakFinderPsocake` | `FindPeaksPsocake` | `Executor` | Psocake peak finding (*DEPRECATED*) |
+| `CheetahRunner` | `RunCheetah` | `Executor` | Run Cheetah hit-finding |
+| `BayFAIOptimizer` | `BayFAI` | `MPIExecutor` | LCLS1 detector geometry optimization (BayFAI) |
+| `BayFAIOptimizer2` | `BayFAI` | `MPIExecutor` | LCLS2 detector geometry optimization (BayFAI) |
+| `Xtc1Reader` | `ReadXtc1` | `Executor` | XTC1→XTC2 conversion reader (new in v0.3.0; replaces ConvertXtc1to2) |
+| `Xtc2Writer` | `WriteXtc2` | `Executor` | XTC1→XTC2 conversion writer (new in v0.3.0) |
 
 **This table is for reference only. Always fetch the current `managed_tasks.py` to get up-to-date names.**
 
