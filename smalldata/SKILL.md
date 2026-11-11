@@ -1,8 +1,11 @@
-# smalldata — SmallData production and the XSS / XAS / XES analyzers
+# smalldata — SmallData production, droplets, and the XSS / XAS / XES analyzers
 
 `SubmitSMD` reduces a run to an HDF5 file; an analyzer then reads named datasets
 out of it. **The producer config is the setup**: an analyzer can only use what the
 producer was told to write, and a missing dataset is discovered only after the run.
+
+**`droplets` in `analyses` → read [`droplets.md`](droplets.md) before asking anything.**
+It is producer-only (no analyzer Task) and carries its own questions, units and traps.
 
 Producer-config details beyond what is below (ROI choice, azav binning, droplets,
 photon counting, which PVs exist): **`@ask-smalldata`**, required.
@@ -11,12 +14,14 @@ photon counting, which PVs exist): **`@ask-smalldata`**, required.
 
 | Field | Value |
 |---|---|
-| `template` | `smalldata/smd.yaml.j2`, with `analyses` = any of `xss`, `xas`, `xes` |
-| `dags` | `smalldata/smd.dag.j2`, same context — workflow `smd_<analyses joined by _>` (e.g. `smd_xss_xes`), trigger `END_OF_RUN` |
+| `template` | `smalldata/smd.yaml.j2`, with `analyses` = any of `xss`, `xas`, `xes`, `droplets` |
+| `dags` | `smalldata/smd.dag.j2`, same context — workflow `smd_<analyses joined by _>` (e.g. `smd_xss_xes`, `smd_droplets`), trigger `END_OF_RUN` |
 | `defaults` | `smalldata/defaults/<hutch>.yaml`, else `default.yaml` |
-| `lute` | `release: <current lute-lcls>` |
+| `lute` | `release: dev` (`central:dev`, lute-lcls 0.4.0+dev) |
 | `validate` | — |
-| `parse` | `python3 smalldata/parse_smd_output.py --log <.out> --h5 <run.h5> --analysis <xss\|xas\|xes> --det <alias> [--ipm-var V] [--scan-var V]` |
+| `smoke` | context `nevents: 100`, `smd_dir: <scratch>/smd_test` on top of the same render; Task: the producer (`SmallDataProducer` / `SmallDataProducer2`) on the operator's representative run; then `parse` on its `.h5`. Required for `droplets` (units are only visible in the output) |
+| `resolve` | `daq`; `detnames` on a recent run (checks every `*_det`) |
+| `parse` | `python3 smalldata/parse_smd_output.py --log <.out> --h5 <run.h5> --analysis <xss\|xas\|xes\|droplets> --det <alias> [--ipm-var V] [--scan-var V]` |
 
 The DAG runs the producer on every run and the analyzer only when the eLog
 `run_type` is `DATA` (`!run_type`), so DARK and calibrant runs are reduced but not
@@ -32,6 +37,7 @@ Read off `lute/tasks/_smalldata.py`, not inferred:
 | XAS | `<det>/ROI_0_sum` (`getROIs`, first ROI) | `xas_detname`, `ipm_var`, `ccm` (readback PV, saved by the producer) |
 | XES | `<det>/ROI_0_area` (`getROIs` with `writeArea: true`) | `xes_detname`, `ipm_var` |
 | all | `lightStatus/xray`, `lightStatus/laser` (written by default) and the `ipm_var` dataset | `scan_var` optional |
+| droplets | `<det>/droplet_nDroplets`, `<det>/var_droplet_sparse/{data,row,col,npix}` (`getDropletParams`, `nData: null`) | — (no analyzer) |
 
 - **XSS `int_units` must be `q_A^-1`.** The producer default is `2th_deg`; the
   analyzer never checks units and reads `pyfai_q` as q regardless.
@@ -53,8 +59,8 @@ Read off `lute/tasks/_smalldata.py`, not inferred:
 
 | Variable | Ask as | Check |
 |---|---|---|
-| `analyses` | "Which analyses: XSS, XAS, XES?" | — |
-| `xss_det` / `xas_det` / `xes_det` | "Which detector records the scattering / XAS / XES signal?" | in `hutch-data detectors` for a recent run — never a colloquial name (`epix_0_0` was `epix100_0`) |
+| `analyses` | "Which analyses: XSS, XAS, XES, droplets?" | — |
+| `xss_det` / `xas_det` / `xes_det` | "Which detector records the scattering / XAS / XES signal?" | in the run's detector names (`resolve: detnames`) — never a colloquial name (`epix_0_0` was `epix100_0`) |
 | `xas_roi`, `xes_roi` | "ROI as `[[row0, row1], [col0, col1]]`?" | inside the detector shape; a full-detector XES ROI is large (704×768 float64 per event) |
 | `ipm_var` | "Which beam-intensity monitor?" | an HDF5 **field** (`MfxDg1BmMon/totalIntensityJoules`), not a happi prefix (`MFX:DG1:IPM`); read its range on a test run before picking a cut |
 | `ccm` (XAS) | "CCM readback PV?" | also listed in `epics_pvs` |
@@ -66,7 +72,7 @@ the run's `scan/` group, else the analyzer silently bins by event), `epics_pvs`
 (`@ask-smalldata` / instrument scientist; cannot be added after the run).
 
 **Resolved, not asked:** `experiment`, `work_dir`, `date`, `lute_version`, `hutch`
-(caller); `daq` (`.xtc2` on disk → `lcls2`); `smd_dir` (default
+(caller); `daq` (`.xtc2` on disk → `lcls2`, `.xtc` only → `lcls1`); `smd_dir` (default
 `/sdf/data/lcls/ds/<hutch>/<exp>/hdf5/smalldata`).
 
 **smalldata_tools is not asked or cloned by hand.** `SmallDataProducer` clones
@@ -74,7 +80,16 @@ the run's `scan/` group, else the analyzer silently bins by event), `epics_pvs`
 `smd.patch` on its first run (`clone_smalldata` tasklet). It skips the clone if that
 directory exists, so a custom fork goes there before the first run.
 
-**Defaults to review** (`defaults/<hutch>.yaml`): `slurm.smd`, `slurm.analyzer`.
+**Defaults to review** (`defaults/<hutch>.yaml`): `slurm.smd`, `slurm.analyzer`, and
+the `droplet_*` values where the file has them (`cxi.yaml`: epix100_1 as calibrated
+2026-11).
+
+## Traps
+
+| Trap | What happens | Do |
+|---|---|---|
+| `detnames` unset, LCLS-I | `smd1_prod_config_template.py` renders `detnames = ` → `SyntaxError` when the producer imports `prod_config_<hutch>.py` (cxi101933627, first smoke test) | the template always sets it |
+| two first runs at once | both `mkdir` a new `directory`; one dies with `FileExistsError` (cxi101933627, backfilling runs 72 and 73 together) | create `directory` before registering, or launch the first run alone. Upstream: `exist_ok=True` |
 
 ## Reading the result
 
@@ -89,3 +104,5 @@ Acceptance (simple, so it lives here):
   re-run of SmallData, not of the analyzer.
 - `laser_off > 0` before reading a difference signal.
 - `scan_var_present` true if a scan was intended.
+
+For `droplets`: [`droplets.md`](droplets.md) *Reading the result*.

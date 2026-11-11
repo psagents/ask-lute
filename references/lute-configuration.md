@@ -148,15 +148,17 @@ class MyTaskParameters(TaskParameters):
 
 | Domain | File |
 |---|---|
-| SmallData | `lute/io/models/smd.py` (~27 KB) |
+| SmallData | `lute/io/models/smd.py` (~30 KB) |
 | SFX peak finding | `lute/io/models/sfx_find_peaks.py` (~12 KB) |
 | SFX indexing | `lute/io/models/sfx_index.py` (~30 KB) |
 | SFX merging | `lute/io/models/sfx_merge.py` (~24 KB) |
-| SFX solving | `lute/io/models/sfx_solve.py` |
-| BayFAI | `lute/io/models/bayfai.py` |
+| SFX solving | `lute/io/models/sfx_solve.py` (~8 KB) |
+| BayFAI | `lute/io/models/bayfai.py` (~6 KB) |
+| Cheetah | `lute/io/models/cheetah.py` (~29 KB) |
 | Geometry | `lute/io/models/geometry.py` |
 | NeXus | `lute/io/models/nexus.py` |
 | XTC | `lute/io/models/xtc.py` |
+| MPI tests | `lute/io/models/mpi_tests.py` |
 | Tests | `lute/io/models/tests.py` |
 
 ---

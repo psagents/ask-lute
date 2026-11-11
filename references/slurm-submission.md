@@ -248,24 +248,8 @@ submit_slurm \
   --ntasks=<N>
 ```
 
-#### Pin multi-node MPI jobs to one node OS
-
-S3DF's milano partition mixes RHEL 8.10 and 9.6 nodes (roughly half each). An MPI
-job whose allocation spans both fails at launch: `mpirun` cannot start its per-node
-daemons (`srun returned non-zero exit status (36096) from launching the per-node
-daemon`, Task exits 127/250 before doing any work). Every node of one job must be on
-the same OS; different tasks or runs may use different versions.
-
-- Add `--constraint=OS_VER:<ver>` to the `slurm_params` of each multi-node task in
-  the DAG (or to `submit_slurm`'s SLURM arguments). LUTE dev (`c1a1a14`) pins
-  `OS_VER:9.6` only in its tests and `submit_launch_airflow.sh` — `launch_slurm`
-  DAGs get nothing automatically.
-- Prefer `OS_VER:9.6` (LUTE dev's choice too). SLURM's `OS_VER` labels lag node
-  reimaging: some nodes labelled 8.10 actually run Rocky 9.6 (seen 2026-10-28 on
-  sdfmilan139–144), so an 8.10 constraint can still give a mixed allocation. Check a
-  node's real OS with `srun -p milano -A lcls:EXP -w NODE -n1 -t 1 cat /etc/redhat-release`.
-- On `dev`, psana2 Tasks (SmallData analyzers, PeakFinderSFX*, Xtc2Writer) also get
-  `PS_PARALLEL=mpi` set by their managed Task.
+On `dev`, psana2 Tasks (SmallData analyzers, PeakFinderSFX*, Xtc2Writer) get
+`PS_PARALLEL=mpi` set by their managed Task.
 
 ### Skill execution steps
 

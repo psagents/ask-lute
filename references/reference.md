@@ -26,13 +26,15 @@
 - **SmallData task** (first-party example): `lute/tasks/smalldata.py`
 - **SFX peak finding**: `lute/tasks/sfx_find_peaks.py`
 - **SFX indexing**: `lute/tasks/sfx_index.py`
-- **BayFAI**: `lute/tasks/bayfai.py`
-- **Geometry**: `lute/tasks/geometry.py`
+- **BayFAI** (LCLS1): `lute/tasks/bayfai.py`; impl: `lute/tasks/_bayfai.py`
+- **Geometry**: `lute/tasks/geometry.py`; impl: `lute/tasks/_geometry.py`
+- **NeXus conversion**: `lute/tasks/nexus.py`
 - **XTC conversion** (ReadXtc1 / WriteXtc2 parallel tasks — replaces old ConvertXtc1to2): `lute/tasks/xtc1.py`, `lute/tasks/xtc2.py`
 - **SFX scaling** (ScaleCCTBXXFEL — new in v0.3.0): `lute/io/models/sfx_merge.py`
 - **Math utilities**: `lute/tasks/math.py`
 - **Test tasks**: `lute/tasks/test.py`
 - **MPI test tasks**: `lute/tasks/mpi_test.py`
+- **Task utilities**: `lute/tasks/util/` directory
 
 ### Executors (process management)
 - **All executor classes** (BaseExecutor / Executor / MPIExecutor, process spawning,
@@ -52,6 +54,8 @@
 - **Parameter utilities**: `lute/io/parameters.py`
 - **Base TaskParameters class**: `lute/io/models/base.py`
 - **Shared validators**: `lute/io/models/validators.py`
+- **Model exports** (must include new models): `lute/io/models/__init__.py`
+- **Cheetah parameters**: `lute/io/models/cheetah.py` (~29 KB)
 
 ### Database & Results
 - **Version-agnostic DB API**: `lute/io/db.py`
@@ -98,7 +102,6 @@ Installs that run `dev` include the central `dev` build and the
 | BayFAI rework: one Task for psana/psana2 (LCLSGeom), `bo_params` → `bayfai_params`, `powder`/`in_file`/`preprocess` removed, new hyperparameters, zip mapping of configurations, MEC DAG | `lute/io/models/bayfai.py`, `workflows/common/bayfai_mec.dag` | #143; see the `bayfai/` sub-skill — `templates/BayFAI.yaml` is still the v0.3.0 shape |
 | `lute/io/calib.py` removed — calibration mapping moved into LCLSGeom | `lute/io/` | |
 | `PS_PARALLEL=mpi` forced for psana2 Tasks (SmallData XSS/XAS/XES analyzers, PeakFinderSFX*, Xtc2Writer) | `lute/managed_tasks.py`, `lute/tasks/util/environment.py` | `206eed1` |
-| `--constraint=OS_VER:9.6` for mixed RHEL 8.10/9.6 nodes breaking MPI | tests + `launch_scripts/submit_launch_airflow.sh` **only** | `c1a1a14`; `launch_slurm` DAGs need their own `slurm_params` constraint — see `slurm-submission.md` |
 | Per-hutch default SLURM params; LCLSGeom azimuthal-integration docs | `utilities/setup/setup_lute.py`; SMD DAGs | #149 |
 
 ## Website URL Map

@@ -63,7 +63,7 @@ if __name__ == "__main__":
         _selfcheck()
         sys.exit(print("ok"))
     if len(sys.argv) not in (2, 3):
-        sys.exit("usage: validate.py <rendered.yaml> [\"<a b c al be ga>\" from hutch-data cell]")
+        sys.exit("usage: validate.py <rendered.yaml> [\"<a b c al be ga>\" from the PDB CRYST1]")
     errors = check(open(sys.argv[1]).read(), sys.argv[2] if len(sys.argv) == 3 else None)
     for e in errors:
         print(f"FAIL  {e}", file=sys.stderr)

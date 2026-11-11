@@ -17,30 +17,21 @@ as the experiment.
 | `defaults` | `bayfai/defaults/<hutch>.yaml` (`mfx`, `mec`, `cxi`, `xcs`), else `default.yaml` |
 | `lute` | `release: dev` (`central:dev`, lute-lcls 0.4.0+dev) |
 | `validate` | — |
+| `resolve` | `daq`; `detnames` on the calibrant run |
 | `parse` | `python3 bayfai/parse_bayfai_log.py <BayFAIOptimizer*.out>` |
 
 **The search shape is per hutch, and lives in `defaults/<hutch>.yaml`** — data, with
 the reason for each value beside it. MFX, CXI and XCS distribute `dist` over ranks with
 every tilt fixed. MEC's four Epix10ka quads each need their own `fixed`, `center` and
 `max_rings`, so MEC alone has its own DAG: `bayfai_mec.dag.j2` renders a `!param_sweep`
-(`zip: true`) from the file's `quads`. Render config and DAG from the same context:
-
-```bash
-D=bayfai/defaults/<hutch>.yaml        # default.yaml if the hutch has none
-hutch-lute render --template bayfai/bayfai.yaml.j2 --context $D \
-    --set-context experiment=… date=… lute_version=… work_dir=… \
-    hutch=<hutch> daq=<lcls1|lcls2> detname=… calibrant=… dist=… \
-    --whitelist-dir <LUTE>/config/templates --out <work_dir>/lute_output/<hutch>_lute.yaml
-hutch-lute render --template bayfai/bayfai.dag.j2 --context $D --set-context daq=… \
-    --no-whitelist --out <work_dir>/lute_output/bayfai.dag
-```
+(`zip: true`) from the file's `quads`. Render config and DAG from the same context.
 
 No `bayfai_params` (`bo_params` before 0.4.0) is written outside MEC's per-quad
 `max_rings`, so the model's own hyperparameters apply whatever the version calls them.
 
 `daq` picks the tasks: LCLS-II `SmallDataProducer2 → BayFAIOptimizer2`, LCLS-I
 `SmallDataProducer → BayFAIOptimizer`. `slurm_params` come from the defaults file's
-`slurm`; `hutch-lute dags` adds account, partition and reservation.
+`slurm`; the caller adds account, partition and reservation.
 
 ## Walk the operator through
 
@@ -49,12 +40,13 @@ No `bayfai_params` (`bo_params` before 0.4.0) is written outside MEC's per-quad
 | Variable | Ask as | Check |
 |---|---|---|
 | calibrant run | "Which run is the calibrant?" | record it `--kind operator`; never fire on sample data |
-| `detname` | "Which detector?" (offer the file's `detname_hint`) | in `hutch-data detectors` for that run — never a colloquial name. MEC: the four quads come from the file |
+| `detname` | "Which detector?" (offer the file's `detname_hint`) | in the run's detector names (`resolve: detnames`) — never a colloquial name. MEC: the four quads come from the file |
 | `calibrant` | "Which calibrant?" | a name PyFAI knows (`AgBh`, `LaB6`, `CeO2`) |
 | `dist` | "Expected sample–detector distance **at the current detector z**, in metres?" | no default. Each rank searches `center.dist ± rank × resolution` with initial samples around it; mfx101941027 rendered the old 0.1 m against a true 0.1426 m and most of the budget searched below the answer |
 
 **Resolved, not asked:** `experiment`, `work_dir`, `date`, `lute_version`, `hutch`
-(caller); `daq` (`.xtc2` on disk → `lcls2`).
+(caller); `daq` (`.xtc2` on disk → `lcls2`, `.xtc` only → `lcls1`; see the top-level
+*`daq` — resolve it first*).
 
 **smalldata_tools is not asked or cloned by hand.** `SmallDataProducer` clones
 `slac-lcls/smalldata_tools` into `{{ work_dir }}/smalldata_tools` and applies LUTE's
