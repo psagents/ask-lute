@@ -12,7 +12,6 @@ NEEDS = {
     "xss": [["{det}/azav_azav", "{det}/pyfai_azav"], ["lightStatus/xray"], ["lightStatus/laser"]],
     "xas": [["{det}/ROI_0_sum"], ["lightStatus/xray"], ["lightStatus/laser"]],
     "xes": [["{det}/ROI_0_area"], ["lightStatus/xray"], ["lightStatus/laser"]],
-    # Producer-only (getDropletParams + sparsifyFunc, nData=None).
     "droplets": [["{det}/droplet_nDroplets"], ["{det}/var_droplet_sparse/data"]],
 }
 
@@ -52,13 +51,7 @@ def check_h5(f, analysis: str, det: str, ipm_var: str | None, scan_var: str | No
 
 
 def droplet_facts(f, det: str, max_droplets: int = 5_000_000) -> dict:
-    """Facts, not a verdict: occupancy and where the droplet-energy histogram peaks.
-
-    Reads at most ``max_droplets`` (a busy run holds hundreds of millions).
-    ``photon_peak`` is in calib units (keV when gain constants are 1/(ADU/keV)).
-    ``top_repeat_fraction`` is the share of events with a droplet at the single most
-    repeated (row, col): ~1.0 is a hot pixel, not signal.
-    """
+    """Droplet occupancy, photon-peak position (calib units) and hot-pixel share."""
     import numpy as np
     nd = np.asarray(f[f"{det}/droplet_nDroplets"][()])
     g = f"{det}/var_droplet_sparse"

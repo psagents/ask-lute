@@ -51,9 +51,7 @@ $% if 'xes' in analyses %
 $% endif %
 $% endif %
 $% if 'droplets' in analyses %
-    # Sparse droplets: per-event var_droplet_sparse/{data,row,col,npix} under <det>/.
-    # Thresholds are in calib units -- keV for a detector whose gain constants are
-    # 1/(ADU/keV); see the calibration-units trap in SKILL.md before using useRms.
+    # Thresholds are in calib units, not always ADU: smalldata/droplets.md, Calibration units.
     getDropletParams:
       ${{ droplet_det }}:
         threshold: ${{ droplet_threshold }}

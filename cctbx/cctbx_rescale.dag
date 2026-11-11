@@ -1,17 +1,11 @@
 !LUTE_DAG
-# Every task is pinned to one node OS: milano mixes RHEL 8.10 and 9.6 nodes and an
-# MPI job spanning both fails at launch (srun exit 36096, Task exit 127). All nodes
-# of one job must share one OS. Keep 9.6: SLURM OS_VER labels lag reimaging and
-# some nodes labelled 8.10 run 9.6, so an 8.10 constraint can still mix; 9.6 has
-# been reliable for CCTBX. Check a node's real OS with
-#   srun -p milano -A lcls:EXP -w NODE -n1 -t 1 cat /etc/redhat-release
-# hutch-lute dags fills in --account/--partition.
+# The caller fills in --account/--partition.
 - task_name: "CCTBXScaler"
   run_dependent: true
-  slurm_params: "--ntasks-per-node=60 --nodes=1 --cpus-per-task=1 --constraint=OS_VER:9.6"
+  slurm_params: "--ntasks-per-node=60 --nodes=1 --cpus-per-task=1"
   next:
   - !ALL_SUCCESS
     task_name: "CCTBXMerger"
     run_dependent: false
-    slurm_params: "--ntasks-per-node=60 --nodes=1 --cpus-per-task=1 --constraint=OS_VER:9.6"
+    slurm_params: "--ntasks-per-node=60 --nodes=1 --cpus-per-task=1"
     next: []

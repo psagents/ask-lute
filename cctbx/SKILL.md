@@ -29,7 +29,8 @@ batch jobs use (conda2, 3.9): a mismatch is `ModuleNotFoundError: No module name
 | `template` | `cctbx/cctbx_pipeline.yaml.j2` |
 | `dags` | `cctbx_index_scale.dag` — workflow `cctbx_index_scale`, trigger `END_OF_RUN`; `cctbx_merge.dag` — workflow `cctbx_merge`, trigger `MANUAL`; `cctbx_rescale.dag` — workflow `cctbx_rescale`, trigger `MANUAL` |
 | `lute` | `source: lcls-mlcv/lute@tag-sample-based-workflow` |
-| `validate` | `python3 cctbx/validate.py <rendered.yaml> "<unit cell from hutch-data cell>"` |
+| `validate` | `python3 cctbx/validate.py <rendered.yaml> "<unit_cell from resolve>"` |
+| `resolve` | `detnames`, `unit_cell`, `run_dirs`: `r<run>/index/logs`, `r<run>/scale` |
 | `parse` | `python3 cctbx/parse_merge_log.py <work_dir>/merge_<tag>/<vNNN>/merge_<tag>_main.log` |
 
 ### How the three workflows fit
@@ -53,7 +54,7 @@ directory must exist before the merge job starts.
 ## Walk the operator through
 
 Required: every row marked *blocker: ask* below, in one message — `tag`/`selector`
-(tag or sample?), `detector_address` (check `hutch-data detectors`), `pdb_file`,
+(tag or sample?), `detector_address` (check `resolve: detnames`), `pdb_file`,
 `geometry_file`, `mask_file` (absolute paths that exist). Then show `d_min`,
 `merge_version` and the spectrometer calibration with their defaults, once. No
 `defaults/` file: the pipeline is per experiment.
@@ -62,9 +63,9 @@ Required: every row marked *blocker: ask* below, in one message — `tag`/`selec
 |---|---|---|
 | `experiment`, `work_dir`, `date` | caller | — |
 | `tag`, `selector` | the eLog tag (`selector: tag`) or eLog sample (`selector: sample`) naming the dataset. If the operator names *what was in the beam*, it is a sample; never approximate a sample with a tag | blocker: ask |
-| `detector_address` | `hutch-data detectors` on one run of the dataset, confirmed by the operator | blocker: ask |
+| `detector_address` | the detector names (`resolve: detnames`) of one run of the dataset, confirmed by the operator | blocker: ask |
 | `pdb_file` | reference structure, absolute path | blocker: ask |
-| `unit_cell`, `space_group` | `hutch-data cell <pdb_file>` — always from CRYST1, never typed in | — |
+| `unit_cell`, `space_group` | `resolve: unit_cell` of `pdb_file` — always from CRYST1, never typed in | — |
 | `geometry_file` | refined `.expt` (e.g. from a geometry refinement) | blocker: ask |
 | `mask_file` | bad-pixel mask, absolute path | blocker: ask |
 | `d_min` | starting resolution, Å; start conservative | `2.5`, list as unreviewed |
@@ -92,7 +93,7 @@ Setup and runtime — not caught:
 
 | Trap | Fix |
 |---|---|
-| Output directories missing | `dials.stills_process` / `cctbx.xfel.merge` open per-rank logs without creating the directory — every rank dies with `FileNotFoundError`. Pre-create `r<run>/index/logs`, `r<run>/scale` per run (`hutch-lute` `ensure_run_dirs`) and `merge_<tag>/<vNNN>` per merge. |
+| Output directories missing | `dials.stills_process` / `cctbx.xfel.merge` open per-rank logs without creating the directory — every rank dies with `FileNotFoundError`. Pre-create `r<run>/index/logs`, `r<run>/scale` per run (`resolve: run_dirs`) and `merge_<tag>/<vNNN>` per merge. |
 | `filter_unit_cell_algorithm: cluster` | needs a covariance file, `TypeError` at `experiment_filter.py:195`; the template uses `unit_cell` |
 | `statistics_cciso_mtz_file: "None"` | cctbx opens a file named `None`; leave it unset |
 | Blank string PHIL value (`scaling_model: ""`, `output_prefix: ""`) | `RuntimeError: Missing value for <key>` — give a value; read the rendered `.phil` to see which line is blank |
@@ -100,7 +101,6 @@ Setup and runtime — not caught:
 | Indexing in P1 | far more lattice candidates per still; ranks OOM at rank counts safe with known symmetry |
 | Kerberos expired | eLog tag/sample resolution returns nothing: `kinit -c FILE:$HOME/krb5cc.ticket` |
 | Explicit `--mem` in `slurm_params` | not needed; known-good runs use the default |
-| Indexer exits 127 within seconds: `srun returned non-zero exit status (36096) from launching the per-node daemon` | allocation mixed RHEL 8.10 and 9.6 nodes. The DAGs pin `--constraint=OS_VER:9.6` (all nodes of a job must share one OS). Keep 9.6 — do not switch to 8.10 for free-node counts: some 8.10-labelled nodes actually run 9.6, so 8.10 can still mix (check with `srun -w NODE -n1 -t 1 cat /etc/redhat-release`). An indexer killed at launch shows as PENDING in the watcher — check `sacct`. LUTE dev's own fix covers only its tests and Airflow |
 | `radial_average_two_theta_*` | 12.5–22.8° is calibrated for MFX Jungfrau; other detectors/energies need their own range |
 
 ## Reading the result

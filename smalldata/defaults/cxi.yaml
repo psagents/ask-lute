@@ -9,11 +9,9 @@ slurm:
   smd: "--nodes=4 --ntasks-per-node=50 --exclusive"
   analyzer: "--nodes=1 --ntasks-per-node=60"
 
-# Droplets on an epix100 at CXI. psana calibrates it to keV (gain constants 0.0597 =
-# 1/16.75 ADU/keV), so thresholds are in keV and useRms must be off: with it on, a
-# "5 sigma" cut lands at ~235 keV and no droplet is ever found (run 94).
-# Re-check median(det.gain) and median(det.rms * det.gain) if the detector or its
-# calibration changes: these values are for epix100_1 as calibrated in 2026-11.
+# Droplets on epix100_1, calibrated to keV: useRms off, thresholds in keV
+# (droplets.md, Calibration units). Re-check median(det.gain) and
+# median(det.rms * det.gain) if the detector or its calibration changes.
 droplet_use_rms: false
 # 5 sigma of the pixel noise: median(rms * gain) = 0.17 keV on run 94.
 droplet_threshold: 0.85

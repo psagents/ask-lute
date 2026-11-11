@@ -2,7 +2,7 @@
 # SmallData on every run; each analyzer in `analyses` only on runs whose run_type is
 # DATA. One producer feeds them all: two workflows would write the same HDF5 twice.
 # `droplets` is producer-only (no analyzer Task), so it adds no step here.
-# hutch-lute dags adds account/partition/reservation.
+# The caller adds account/partition/reservation.
 - !branch_daq2
 $% for daq, producer in (("daq2", "SmallDataProducer2"), ("daq1", "SmallDataProducer")) %
   ${{ daq }}:
