@@ -42,7 +42,7 @@ own tools.
 | `defaults` | `<sub-skill>/defaults/<hutch>.yaml`, else `default.yaml` where the sub-skill has one: the per-hutch knowledge as data, each value with its reason. |
 | `sets` | `TASK.BLOCK.KEY=value` overrides on top of the template. |
 | `dags` | Each DAG with its workflow name and eLog trigger (`START_OF_RUN`, `END_OF_RUN`, `MANUAL`, `RUN_PARAM_IS_VALUE:<name>:<value>`). A `.dag.j2` is rendered with the same context and delimiters, without the LUTE template whitelist; a `.dag` is copied. The caller adds account, partition and reservation. |
-| `lute` | `release: <version>` — in production; runs from the central build `/sdf/group/lcls/ds/tools/lute/<version>` (`dev` = lute-lcls 0.4.0+dev), pip venvs only if there is none. Or `source: <repo>@<branch>` — not in production, clone and build that branch (needs internet: not from a hutch host). |
+| `lute` | **Default `source: slac-lcls/lute@<newest +dev tag>`** — the nightly release CI/CD re-cuts on `dev` (e.g. `v0.4.0+dev`; newest `+dev` name from the tags API below). Clone and build that tag (needs internet: not from a hutch host). The central build `/sdf/group/lcls/ds/tools/lute/dev` lags it, so `release: <version>` only when the operator asks for a central build. A sub-skill may pin its own `source` (`cctbx`). |
 | `validate` | Optional command; non-zero exit means the rendered config must not be installed. |
 | `smoke` | Optional. The same template rendered with `nevents` small (100) and its output directory in scratch, submitted as one Task on a run the operator names, then read with `parse` — **before** registering. It catches what only shows at run time (wrong units, a config that fails to import) in minutes, without writing into the experiment's real output. |
 | `resolve` | Facts the caller reads off the experiment, and what each fills or checks: `daq` → `daq`; `detnames` (a run) → checks every detector variable; `unit_cell` (`pdb_file`) → `unit_cell`, `space_group` from CRYST1; `run_dirs` → directories to create before a Task starts. |
@@ -129,7 +129,7 @@ file from the LUTE the user actually runs before giving a definitive answer:
 | Command-line entry points | `[project.scripts]` in `pyproject.toml` |
 | Workflow backends and shipped DAGs | `workflows/` directory listing |
 | Rendered PHIL templates (CCTBX) | `config/templates/cctbx_*.phil` |
-| Released versions | `https://api.github.com/repos/slac-lcls/lute/tags` |
+| Released versions; the newest `+dev` tag is the default install | `https://api.github.com/repos/slac-lcls/lute/tags` |
 | SmallData producer hooks (`get_droplet`, `getROIs`, …) and per-detector common mode | `slac-lcls/smalldata_tools`: `lcls1_producers/smd_producer.py`, `lcls2_producers/smd_producer.py` — a separate repo; the copy that runs is the one cloned into `{{ work_dir }}/smalldata_tools` |
 | A SmallData analysis function's kwargs | `smalldata_tools/ana_funcs/*.py` (e.g. `droplet.py`) |
 

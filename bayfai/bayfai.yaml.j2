@@ -36,6 +36,16 @@ $% if parallelized is defined %
   parallelized: "${{ parallelized }}"
 $% endif %
   fixed: ${{ fixed | tojson }}
-  center: ${{ dict(center, dist=dist | float) | tojson }}
+$% if dist_bounds is defined %
+{## Ranks overwrite center.dist with their window centre; the midpoint only keeps the
+    validator's center-inside-bounds check happy. ##}
+$% set db = dist_bounds | map('float') | list %
+  center: ${{ dict(center, dist=((db[0] + db[1]) / 2) | round(6)) | tojson }}
+  bounds: ${{ dict(bounds, dist=db) | tojson }}
+$% else %
+  center: ${{ center | tojson }}
   bounds: ${{ bounds | tojson }}
+$% endif %
+$% if resolutions is defined %
   resolutions: ${{ resolutions | tojson }}
+$% endif %

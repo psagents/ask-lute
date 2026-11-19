@@ -13,5 +13,6 @@ next:
     detname: ${{ quads | map(attribute='detname') | list | tojson }}
     fixed: ${{ quads | map(attribute='fixed') | list | tojson }}
     center: ${{ quads | map(attribute='center') | list | tojson }}
+    bounds: ${{ quads | map(attribute='bounds') | list | tojson }}
     bayfai_params: ${{ quads | map(attribute='bayfai_params') | list | tojson }}
   next: []

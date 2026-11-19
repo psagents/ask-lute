@@ -1,7 +1,7 @@
 # BayFAI search defaults for a hutch with no file of its own. Same as MFX; every
 # value is unreviewed for this hutch -- say so to the operator.
 
-# Spread dist over MPI ranks as a sliding window. Without it every rank runs the
+# Split bounds.dist into one window per MPI rank. Without it every rank runs the
 # same full search, differing only by seed.
 parallelized: dist
 
@@ -10,27 +10,22 @@ parallelized: dist
 # a refinement pass in a tight window.
 fixed: [rot1, rot2, rot3]
 
-# Offsets around center (metres, radians).
+# Absolute [low, high] limits. bounds.dist is the operator's `dist_bounds`, split
+# geometrically across ranks (dist_spacing). The rest are the model's defaults, written
+# out because a bounds dict replaces the model's whole and BayFAI reads every free key.
 bounds:
-  dist: [-0.05, 0.05]
-  poni1: [-0.005, 0.005]
-  poni2: [-0.005, 0.005]
+  poni1: [-0.0025, 0.0025]
+  poni2: [-0.0025, 0.0025]
   rot1: [-0.1, 0.1]
   rot2: [-0.1, 0.1]
   rot3: [-0.1, 0.1]
 
-# Replaces the model dict whole, so all six keys. poni at the model's 0.0001 m makes a
-# 1,050,804-row grid that gp.predict scans every iteration: never finished. 0.0005 m:
-# 44,541 rows, same distance to 0.02 mm.
-resolutions:
-  dist: 0.001
-  poni1: 0.0005
-  poni2: 0.0005
-  rot1: 0.02
-  rot2: 0.02
-  rot3: 0.02
+# No resolutions: the model's apply (lute#157, benchmarked on 67 + 41 datasets). Poni
+# at its 0.0001 m is fine now: n_cand scores 8192 random grid points per step instead
+# of the whole grid. min_points defaults to 100 for a dist sweep, so a few stray
+# control points cannot win.
 
-# Beam centre and tilts to start from; center.dist is the operator's `dist`.
+# Beam centre and tilts to start from. No dist: each rank starts at its own window.
 center: {poni1: 0.0, poni2: 0.0, rot1: 0.0, rot2: 0.0, rot3: 0.0}
 
 

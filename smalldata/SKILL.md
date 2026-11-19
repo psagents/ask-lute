@@ -17,7 +17,7 @@ photon counting, which PVs exist): **`@ask-smalldata`**, required.
 | `template` | `smalldata/smd.yaml.j2`, with `analyses` = any of `xss`, `xas`, `xes`, `droplets` |
 | `dags` | `smalldata/smd.dag.j2`, same context — workflow `smd_<analyses joined by _>` (e.g. `smd_xss_xes`, `smd_droplets`), trigger `END_OF_RUN` |
 | `defaults` | `smalldata/defaults/<hutch>.yaml`, else `default.yaml` |
-| `lute` | `release: dev` (`central:dev`, lute-lcls 0.4.0+dev) |
+| `lute` | default: `source: slac-lcls/lute@<newest +dev tag>` |
 | `validate` | — |
 | `smoke` | context `nevents: 100`, `smd_dir: <scratch>/smd_test` on top of the same render; Task: the producer (`SmallDataProducer` / `SmallDataProducer2`) on the operator's representative run; then `parse` on its `.h5`. Required for `droplets` (units are only visible in the output) |
 | `resolve` | `daq`; `detnames` on a recent run (checks every `*_det`) |
